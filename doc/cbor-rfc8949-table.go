@@ -153,7 +153,7 @@ func (this *Table) read(filename string) (e error){
 func (this *Table) print(){
 
 	var count int = table.size()
-	fmt.Printf("# %s: %d\n",this.filename,count)
+	fmt.Printf("# %s %d\n",this.filename,count)
 
 	var index int = 0
 	for ; index < count; index++ {
