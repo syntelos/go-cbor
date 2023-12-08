@@ -15,7 +15,7 @@ import (
 )
 
 func TestCbor(t *testing.T){
-	var b CborTag = []byte{0b01011000}
+	var o CborObject = CborObject{[]byte{0b01011000}}
 
-	fmt.Println(b.String())
+	fmt.Println(o.String())
 }
