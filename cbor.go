@@ -421,6 +421,18 @@ func (this CborTag) Read(r io.Reader) (e error){
 }
 /*
  */
+func (this CborTag) WriteData(w io.Writer, d []byte) (e error) {
+	if 0 < len(d) {
+
+		_, e = w.Write(d)
+
+		return e
+	} else {
+		return ErrorMissingData
+	}
+}
+/*
+ */
 func (this CborTag) ReadData(r io.Reader) (d []byte, e error) {
 	if 0 < len(this) {
 		var t byte = this[0]
@@ -916,18 +928,6 @@ func (this CborTag) ReadData(r io.Reader) (d []byte, e error) {
 		}
 	} else {
 		return nil, ErrorMissingTag
-	}
-}
-/*
- */
-func (this CborTag) WriteData(w io.Writer, d []byte) (e error) {
-	if 0 < len(d) {
-
-		_, e = w.Write(d)
-
-		return e
-	} else {
-		return ErrorMissingData
 	}
 }
 /*
