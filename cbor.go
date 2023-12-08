@@ -32,7 +32,7 @@ var TODOTagFloat error = errors.New("Unsupported CBOR Tag Float")
 /*
  * Principal user interface.
  */
-type CborIO interface {
+type IO interface {
 
 	Write(io.Writer) (error)
 
@@ -41,16 +41,36 @@ type CborIO interface {
 /*
  * Encoded data set.
  */
-type CborObject []byte
+type Object []byte
+/*
+ * Eight bits of Tag.  See Appendix B Table 7 [RFC8949].
+ * See also ./doc/cbor-rfc8949-table.go
+ */
+type Tag byte
+/*
+ * High three bits of Tag shifted onto Major Type (0-7).
+ * See Section 3.1 [RFC8949].
+ */
+type Major byte
 /*
  */
-func (this CborObject) Write(w io.Writer) (e error){
+var MajorUint Major   = Major(0)
+var MajorSint Major   = Major(1)
+var MajorBlob Major   = Major(2)
+var MajorText Major   = Major(3)
+var MajorArray Major  = Major(4)
+var MajorMap Major    = Major(5)
+var MajorTagged Major = Major(6)
+var MajorSimple Major = Major(7)
+/*
+ */
+func (this Object) Write(w io.Writer) (e error){
 	_, e = w.Write(this)
 	return e
 }
 /*
  */
-func (this CborObject) Read(r io.Reader) (e error){
+func (this Object) Read(r io.Reader) (e error){
 	var tag []byte = make([]byte,1)
 	var m, n int
 
@@ -62,7 +82,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 	} else {
 		var d []byte
 		var t byte = tag[0]
-		var a CborObject
+		var a Object
 
 		switch t {
 		case 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17:
@@ -691,11 +711,10 @@ func (this CborObject) Read(r io.Reader) (e error){
 }
 /*
  */
-func (this CborObject) String() string {
-	var z int = len(this)
-	if 0 < z {
-		var t byte = this[0]
-		switch t {
+func (this Object) String() string {
+	if this.HasTag() {
+		var tag Tag = this.Tag()
+		switch tag {
 		case 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17:
 			return "unsigned integer 0x00..0x17 (0..23)"
 		case 0x18:
@@ -808,6 +827,85 @@ func (this CborObject) String() string {
 	} else {
 		return ""
 	}
+}
+/*
+ */
+func (this Object) HasTag() bool {
+	var z int = len(this)
+	return (0 < z)
+}
+/*
+ */
+func (this Object) Tag() Tag {
+	if this.HasTag() {
+		return Tag(this[0])
+	} else {
+		return 0
+	}
+}
+/*
+ */
+func (this Object) Major() Major {
+	if this.HasTag() {
+		var tag Tag = this.Tag()
+		var major Major = Major((tag & 0xE0)>>5)
+		return major
+	} else {
+		return Major(0)
+	}
+}
+/*
+ */
+func (this Object) MajorString() string {
+	if this.HasTag() {
+		switch this.Major() {
+		case MajorUint:
+			return "unsigned integer"
+		case MajorSint:
+			return "signed integer"
+		case MajorBlob:
+			return "blob"
+		case MajorText:
+			return "text"
+		case MajorArray:
+			return "array"
+		case MajorMap:
+			return "map"
+		case MajorTagged:
+			return "tagged data item"
+		case MajorSimple:
+			return "float, simple, break"
+		default:
+			return ""
+		}
+	} else {
+		return ""
+	}
+}
+/*
+ */
+func (this Object) HasText() bool {
+	return (this.HasTag() && MajorText == this.Major())
+}
+/*
+ */
+func (this Object) Text() (s string) {
+	if this.HasText() {
+		var tag Tag = this.Tag()
+		switch tag {
+		case 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77:
+			var m int = int(tag-0x60)
+			var text []byte = this[1:(m+1)]
+			return string(text)
+
+		case 0x78:
+		case 0x79:
+		case 0x7A:
+		case 0x7B:
+
+		}
+	}
+	return ""
 }
 /*
  */

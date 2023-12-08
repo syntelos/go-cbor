@@ -14,8 +14,13 @@ import (
 	"testing"
 )
 
-func TestCbor(t *testing.T){
-	var o CborObject = CborObject{0b01011000}
+func TestTag(t *testing.T){
+	var o Object = Object{0b01011000}
 
-	fmt.Println(o.String())
+	fmt.Printf("0x%02X 0b%08b [%s] \"%s\"\n", o.Tag(), o.Tag(), o.MajorString(), o.String())
+}
+func TestText(t *testing.T){
+	var o Object = Object{0x6D,0x68,0x65,0x6C,0x6C,0x6F,0x2C,0x20,0x77,0x6f,0x72,0x6C,0x64,0x02E}
+
+	fmt.Printf("[%s] \"%s\"\n", o.MajorString(), o.Text())
 }
