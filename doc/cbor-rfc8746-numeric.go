@@ -8,13 +8,9 @@ import (
 	"fmt"
 )
 
-type CborTagNum = byte
+type CborTag = byte
 
-const CborTagNumMask byte = 0b01000000
-const CborTagNumMaskFmt byte = 0b01010000
-const CborTagNumMaskSig byte = 0b01001000
-const CborTagNumMaskEnd byte = 0b01000100
-const CborTagNumMaskLen byte = 0b01000011
+const CborTagNumMajor byte = (0b010 << 5)
 
 const CborTagNumLen8  byte = 0
 const CborTagNumLen16  byte = 1
@@ -30,14 +26,19 @@ const CborTagNumSigS byte = 1
 const CborTagNumEndBig byte = 0
 const CborTagNumEndLil byte = 1
 
-func CborTagNumString(fmt, sig, end, len byte) (s string){
-	switch fmt {
+type CborTagNum struct {
+	fmt, sig, end, len CborTag
+}
+
+func (this CborTagNum) String() string {
+
+	switch this.fmt {
 	case CborTagNumFmtInt:
-		switch sig {
+		switch this.sig {
 		case CborTagNumSigU:
-			switch end {
+			switch this.end {
 			case CborTagNumEndBig:
-				switch len {
+				switch this.len {
 				case CborTagNumLen8:
 					return "cbor-num-int-u-big-8"
 				case CborTagNumLen16:
@@ -48,7 +49,7 @@ func CborTagNumString(fmt, sig, end, len byte) (s string){
 					return "cbor-num-int-u-big-64"
 				}
 			case CborTagNumEndLil:
-				switch len {
+				switch this.len {
 				case CborTagNumLen8:
 					return "cbor-num-int-u-lil-8"
 				case CborTagNumLen16:
@@ -61,9 +62,9 @@ func CborTagNumString(fmt, sig, end, len byte) (s string){
 			}
 
 		case CborTagNumSigS:
-			switch end {
+			switch this.end {
 			case CborTagNumEndBig:
-				switch len {
+				switch this.len {
 				case CborTagNumLen8:
 					return "cbor-num-int-s-big-8"
 				case CborTagNumLen16:
@@ -74,7 +75,7 @@ func CborTagNumString(fmt, sig, end, len byte) (s string){
 					return "cbor-num-int-s-big-64"
 				}
 			case CborTagNumEndLil:
-				switch len {
+				switch this.len {
 				case CborTagNumLen8:
 					return "cbor-num-int-s-lil-8"
 				case CborTagNumLen16:
@@ -88,11 +89,11 @@ func CborTagNumString(fmt, sig, end, len byte) (s string){
 		}
 
 	case CborTagNumFmtFlt:
-		switch sig {
+		switch this.sig {
 		case CborTagNumSigU:
-			switch end {
+			switch this.end {
 			case CborTagNumEndBig:
-				switch len {
+				switch this.len {
 				case CborTagNumLen8:
 					return "cbor-flt-int-u-big-8"
 				case CborTagNumLen16:
@@ -103,7 +104,7 @@ func CborTagNumString(fmt, sig, end, len byte) (s string){
 					return "cbor-flt-int-u-big-64"
 				}
 			case CborTagNumEndLil:
-				switch len {
+				switch this.len {
 				case CborTagNumLen8:
 					return "cbor-flt-int-u-lil-8"
 				case CborTagNumLen16:
@@ -116,9 +117,9 @@ func CborTagNumString(fmt, sig, end, len byte) (s string){
 			}
 
 		case CborTagNumSigS:
-			switch end {
+			switch this.end {
 			case CborTagNumEndBig:
-				switch len {
+				switch this.len {
 				case CborTagNumLen8:
 					return "cbor-num-flt-s-big-8"
 				case CborTagNumLen16:
@@ -129,7 +130,7 @@ func CborTagNumString(fmt, sig, end, len byte) (s string){
 					return "cbor-num-flt-s-big-64"
 				}
 			case CborTagNumEndLil:
-				switch len {
+				switch this.len {
 				case CborTagNumLen8:
 					return "cbor-num-flt-s-lil-8"
 				case CborTagNumLen16:
@@ -146,8 +147,24 @@ func CborTagNumString(fmt, sig, end, len byte) (s string){
 	return "cbor-num"
 }
 
-func main(){
-	const head string = "0b010"
+func (this CborTagNum) Binary() (tag CborTag) {
+	tag = CborTagNumMajor
+	if 0 != this.fmt {
+		tag |= (this.fmt << 4)
+	}
+	if 0 != this.sig {
+		tag |= (this.sig << 3)
+	}
+	if 0 != this.end {
+		tag |= (this.end << 2)
+	}
+	if 0 != this.len {
+		tag |= this.len
+	}
+	return tag
+}
+
+func Enumerate() (a []CborTagNum){
 	var list_f = []byte {CborTagNumFmtInt, CborTagNumFmtFlt}
 	var list_s = []byte {CborTagNumSigU, CborTagNumSigS}
  	var list_e = []byte {CborTagNumEndBig, CborTagNumEndLil}
@@ -156,9 +173,25 @@ func main(){
 		for _, s := range list_s {
 			for _, e := range list_e {
 				for _, l := range list_l {
-					fmt.Printf("%s\t%s%b%b%b%02b\n",CborTagNumString(f,s,e,l),head,f,s,e,l)
+					var o CborTagNum
+					o.fmt = f
+					o.sig = s
+					o.end = e
+					o.len = l
+					a = append(a,o)
 				}
 			}
 		}
+	}
+	return a
+}
+
+func main(){
+
+	for _, o := range Enumerate() {
+		var s string = o.String()
+		var b CborTag = o.Binary()
+
+		fmt.Printf("%s\t0x%X\t0b%b\n", s, b, b)
 	}
 }

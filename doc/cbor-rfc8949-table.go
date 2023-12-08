@@ -17,7 +17,7 @@ func usage(){
 	fmt.Fprintln(os.Stderr,`
 Synopsis
 
-    table [print|enumerate] <file>
+    table [print|enumerate]
 
 Description
 
@@ -32,6 +32,25 @@ type Line struct {
 	first, last uint8
 	description string
 }
+func rewrite(src []byte) (string) {
+	var ch byte
+	var idx, cnt int = 0, len(src)
+
+	var tgt []byte = make([]byte,cnt)
+
+	for ; idx < cnt; idx++ {
+		ch = src[idx]
+
+		if '"' == ch {
+			tgt[idx] = '\''
+
+		} else {
+			tgt[idx] = ch
+		}
+	}
+
+	return string(tgt)
+}
 func (this Line) ctor(inl []byte) (Line) {
 	var x, z int = 0, len(inl)
 	var lhs []byte
@@ -44,7 +63,7 @@ func (this Line) ctor(inl []byte) (Line) {
 
 			lhs = inl[0:x]
 
-			this.description = string(inl[x+1:])
+			this.description = rewrite(inl[x+1:])
 			{
 				switch len(lhs) {
 				case 4:
@@ -90,14 +109,24 @@ func (this Line) print(){
 }
 func (this Line) enumerate(){
 	if this.first == this.last {
-		fmt.Printf("0x%02X\t%s\n",this.first,this.description)
+
+		fmt.Printf("case 0x%02X:\n\treturn \"%s\"\n",this.first,this.description)
+
 	} else {
 		var x, y uint8 = this.first, this.last
-		
+
+		fmt.Printf("case ")
+
 		for ; x <= y; x++ {
 
-			fmt.Printf("0x%02X\t%s\n",x,this.description)
+			if this.first == x {
+
+				fmt.Printf("0x%02X",x)
+			} else {
+				fmt.Printf(", 0x%02X",x)
+			}
 		}
+		fmt.Printf(":\n\treturn \"%s\"\n",this.description)
 	}
 }
 /*
@@ -170,20 +199,45 @@ func (this *Table) enumerate(){
 }
 /*
  */
+const location_rel string = "cbor-rfc8949-table.txt"
+const location_doc string = "doc/cbor-rfc8949-table.txt"
+
+func (this *Table) location() (string, error) {
+	_, er := os.Stat("doc")
+	if nil == er {
+		_, er := os.Stat(location_doc)
+		if nil == er {
+			return location_doc, nil
+		} else {
+			return "", er
+		}
+	} else {
+		_, er := os.Stat(location_rel)
+		if nil == er {
+			return location_rel, nil
+		} else {
+			return "", er
+		}
+	}
+}
+/*
+ */
 func main(){
 	var argc int = len(os.Args)
 	var argx int = 1
 	if argx < argc {
 		var opr string = os.Args[argx]
 
-		argx += 1
-		if argx < argc {
-			var filename string = os.Args[argx]
-
+		var fin string
+		var err error
+		fin, err = table.location()
+		if nil != err {
+			fmt.Fprintf(os.Stderr,"table: file not found '%s'.\n",location_doc);
+		} else {
 			switch opr {
 
 			case "print":
-				e := table.read(filename)
+				e := table.read(fin)
 				if nil != e {
 					fmt.Fprintf(os.Stderr,"table: %v\n",e);
 					os.Exit(1)
@@ -194,7 +248,7 @@ func main(){
 				}
 
 			case "enumerate":
-				e := table.read(filename)
+				e := table.read(fin)
 				if nil != e {
 					fmt.Fprintf(os.Stderr,"table: %v\n",e);
 					os.Exit(1)
@@ -207,8 +261,6 @@ func main(){
 			default:
 				usage()
 			}
-		} else {
-			usage()
 		}
 	} else {
 		usage()

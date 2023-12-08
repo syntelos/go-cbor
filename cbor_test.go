@@ -9,7 +9,13 @@
  */
 package cbor
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestCbor(t *testing.T){
+	var b CborTag = []byte{0b01011000}
+
+	fmt.Println(b.String())
 }
