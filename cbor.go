@@ -366,6 +366,12 @@ func (this CborObject) Read(r io.Reader) (e error){
 					this = concatenate(this,a)
 
 					a = make([]byte,0)
+
+				} else if Break == e {
+					e = nil
+					break
+				} else {
+					return fmt.Errorf("Data: %w",e)
 				}
 			}
 			return nil
