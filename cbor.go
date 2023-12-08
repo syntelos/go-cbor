@@ -41,14 +41,11 @@ type CborIO interface {
 /*
  * Encoded data set.
  */
-type CborObject struct {
-
-	cbor []byte
-}
+type CborObject []byte
 /*
  */
 func (this CborObject) Write(w io.Writer) (e error){
-	_, e = w.Write(this.cbor)
+	_, e = w.Write(this)
 	return e
 }
 /*
@@ -70,13 +67,13 @@ func (this CborObject) Read(r io.Reader) (e error){
 		case 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17:
 			/* unsigned integer 0x00..0x17 (0..23)
 			 */
-			this.cbor = tag
+			this = tag
 			return nil
 
 		case 0x18:
 			/* unsigned integer (one-byte uint8_t follows)
 			 */
-			this.cbor = tag
+			this = tag
 			d = make([]byte,1)
 			n, e = r.Read(d)
 			if nil != e {
@@ -84,14 +81,14 @@ func (this CborObject) Read(r io.Reader) (e error){
 			} else if 1 != n {
 				return ErrorMissingData
 			} else {
-				this.cbor = concatenate(this.cbor,d)
+				this = concatenate(this,d)
 				return nil
 			}
 
 		case 0x19:
 			/* unsigned integer (two-byte uint16_t follows)
 			 */
-			this.cbor = tag
+			this = tag
 			d = make([]byte,2)
 			n, e = r.Read(d)
 			if nil != e {
@@ -99,14 +96,14 @@ func (this CborObject) Read(r io.Reader) (e error){
 			} else if 2 != n {
 				return ErrorMissingData
 			} else {
-				this.cbor = concatenate(this.cbor,d)
+				this = concatenate(this,d)
 				return nil
 			}
 
 		case 0x1A:
 			/* unsigned integer (four-byte uint32_t follows)
 			 */
-			this.cbor = tag
+			this = tag
 			d = make([]byte,4)
 			n, e = r.Read(d)
 			if nil != e {
@@ -114,14 +111,14 @@ func (this CborObject) Read(r io.Reader) (e error){
 			} else if 4 != n {
 				return ErrorMissingData
 			} else {
-				this.cbor = concatenate(this.cbor,d)
+				this = concatenate(this,d)
 				return nil
 			}
 
 		case 0x1B:
 			/* unsigned integer (eight-byte uint64_t follows)
 			 */
-			this.cbor = tag
+			this = tag
 			d = make([]byte,8)
 			n, e = r.Read(d)
 			if nil != e {
@@ -129,20 +126,20 @@ func (this CborObject) Read(r io.Reader) (e error){
 			} else if 8 != n {
 				return ErrorMissingData
 			} else {
-				this.cbor = concatenate(this.cbor,d)
+				this = concatenate(this,d)
 				return nil
 			}
 
 		case 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37:
 			/* negative integer -1-0x00..-1-0x17 (-1..-24)
 			 */
-			this.cbor = tag
+			this = tag
 			return nil
 
 		case 0x38:
 			/* negative integer -1-n (one-byte uint8_t for n follows)
 			 */
-			this.cbor = tag
+			this = tag
 			d = make([]byte,1)
 			n, e = r.Read(d)
 			if nil != e {
@@ -159,7 +156,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 					return ErrorMissingData
 				} else {
 					d = concatenate(d,p)
-					this.cbor = concatenate(this.cbor,d)
+					this = concatenate(this,d)
 					return nil
 				}	
 			}
@@ -167,7 +164,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 		case 0x39:
 			/* negative integer -1-n (two-byte uint16_t for n follows)
 			 */
-			this.cbor = tag
+			this = tag
 			d = make([]byte,2)
 			n, e = r.Read(d)
 			if nil != e {
@@ -184,7 +181,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 					return ErrorMissingData
 				} else {
 					d = concatenate(d,p)
-					this.cbor = concatenate(this.cbor,d)
+					this = concatenate(this,d)
 					return nil
 				}	
 			}
@@ -192,7 +189,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 		case 0x3A:
 			/* negative integer -1-n (four-byte uint32_t for n follows)
 			 */
-			this.cbor = tag
+			this = tag
 			d = make([]byte,4)
 			n, e = r.Read(d)
 			if nil != e {
@@ -209,7 +206,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 					return ErrorMissingData
 				} else {
 					d = concatenate(d,p)
-					this.cbor = concatenate(this.cbor,d)
+					this = concatenate(this,d)
 					return nil
 				}	
 			}
@@ -217,7 +214,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 		case 0x3B:
 			/* negative integer -1-n (eight-byte uint64_t for n follows)
 			 */
-			this.cbor = tag
+			this = tag
 			d = make([]byte,8)
 			n, e = r.Read(d)
 			if nil != e {
@@ -234,7 +231,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 					return ErrorMissingData
 				} else {
 					d = concatenate(d,p)
-					this.cbor = concatenate(this.cbor,d)
+					this = concatenate(this,d)
 					return nil
 				}	
 			}
@@ -242,7 +239,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 		case 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57:
 			/* byte string (0x00..0x17 bytes follow)
 			 */
-			this.cbor = tag
+			this = tag
 			m = int(t-0x40)
 			d = make([]byte,m)
 			n, e = r.Read(d)
@@ -251,14 +248,14 @@ func (this CborObject) Read(r io.Reader) (e error){
 			} else if m != n {
 				return ErrorMissingData
 			} else {
-				this.cbor = concatenate(this.cbor,d)
+				this = concatenate(this,d)
 				return nil
 			}
 
 		case 0x58:
 			/* byte string (one-byte uint8_t for n, and then n bytes follow)
 			 */
-			this.cbor = tag
+			this = tag
 			d = make([]byte,1)
 			n, e = r.Read(d)
 			if nil != e {
@@ -275,7 +272,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 					return ErrorMissingData
 				} else {
 					d = concatenate(d,p)
-					this.cbor = concatenate(this.cbor,d)
+					this = concatenate(this,d)
 					return nil
 				}	
 			}
@@ -283,7 +280,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 		case 0x59:
 			/* byte string (two-byte uint16_t for n, and then n bytes follow)
 			 */
-			this.cbor = tag
+			this = tag
 			d = make([]byte,2)
 			n, e = r.Read(d)
 			if nil != e {
@@ -300,7 +297,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 					return ErrorMissingData
 				} else {
 					d = concatenate(d,p)
-					this.cbor = concatenate(this.cbor,d)
+					this = concatenate(this,d)
 					return nil
 				}	
 			}
@@ -308,7 +305,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 		case 0x5A:
 			/* byte string (four-byte uint32_t for n, and then n bytes follow)
 			 */
-			this.cbor = tag
+			this = tag
 			d = make([]byte,4)
 			n, e = r.Read(d)
 			if nil != e {
@@ -325,7 +322,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 					return ErrorMissingData
 				} else {
 					d = concatenate(d,p)
-					this.cbor = concatenate(this.cbor,d)
+					this = concatenate(this,d)
 					return nil
 				}	
 			}
@@ -333,7 +330,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 		case 0x5B:
 			/* byte string (eight-byte uint64_t for n, and then n bytes follow)
 			 */
-			this.cbor = tag
+			this = tag
 			d = make([]byte,8)
 			n, e = r.Read(d)
 			if nil != e {
@@ -350,7 +347,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 					return ErrorMissingData
 				} else {
 					d = concatenate(d,p)
-					this.cbor = concatenate(this.cbor,d)
+					this = concatenate(this,d)
 					return nil
 				}	
 			}
@@ -358,13 +355,13 @@ func (this CborObject) Read(r io.Reader) (e error){
 		case 0x5F:
 			/* byte string, byte strings follow, terminated by 'break'
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagArray
 
 		case 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77:
 			/* UTF-8 string (0x00..0x17 bytes follow)
 			 */
-			this.cbor = tag
+			this = tag
 			m = int(t-0x60)
 			d = make([]byte,m)
 			n, e = r.Read(d)
@@ -373,14 +370,14 @@ func (this CborObject) Read(r io.Reader) (e error){
 			} else if m != n {
 				return ErrorMissingData
 			} else {
-				this.cbor = concatenate(this.cbor,d)
+				this = concatenate(this,d)
 				return nil
 			}
 
 		case 0x78:
 			/* UTF-8 string (one-byte uint8_t for n, and then n bytes follow)
 			 */
-			this.cbor = tag
+			this = tag
 			d = make([]byte,1)
 			n, e = r.Read(d)
 			if nil != e {
@@ -397,7 +394,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 					return ErrorMissingData
 				} else {
 					d = concatenate(d,p)
-					this.cbor = concatenate(this.cbor,d)
+					this = concatenate(this,d)
 					return nil
 				}	
 			}
@@ -405,7 +402,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 		case 0x79:
 			/* UTF-8 string (two-byte uint16_t for n, and then n bytes follow)
 			 */
-			this.cbor = tag
+			this = tag
 			d = make([]byte,2)
 			n, e = r.Read(d)
 			if nil != e {
@@ -422,7 +419,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 					return ErrorMissingData
 				} else {
 					d = concatenate(d,p)
-					this.cbor = concatenate(this.cbor,d)
+					this = concatenate(this,d)
 					return nil
 				}	
 			}
@@ -430,7 +427,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 		case 0x7A:
 			/* UTF-8 string (four-byte uint32_t for n, and then n bytes follow)
 			 */
-			this.cbor = tag
+			this = tag
 			d = make([]byte,4)
 			n, e = r.Read(d)
 			if nil != e {
@@ -447,7 +444,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 					return ErrorMissingData
 				} else {
 					d = concatenate(d,p)
-					this.cbor = concatenate(this.cbor,d)
+					this = concatenate(this,d)
 					return nil
 				}
 			}
@@ -455,7 +452,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 		case 0x7B:
 			/* UTF-8 string (eight-byte uint64_t for n, and then n bytes follow)
 			 */
-			this.cbor = tag
+			this = tag
 			d = make([]byte,8)
 			n, e = r.Read(d)
 			if nil != e {
@@ -472,7 +469,7 @@ func (this CborObject) Read(r io.Reader) (e error){
 					return ErrorMissingData
 				} else {
 					d = concatenate(d,p)
-					this.cbor = concatenate(this.cbor,d)
+					this = concatenate(this,d)
 					return nil
 				}	
 			}
@@ -480,193 +477,193 @@ func (this CborObject) Read(r io.Reader) (e error){
 		case 0x7F:
 			/* UTF-8 string, UTF-8 strings follow, terminated by 'break'
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagArray
 
 		case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F, 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97:
 			/* array (0x00..0x17 data items follow)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagArray
 
 		case 0x98:
 			/* array (one-byte uint8_t for n, and then n data items follow)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagArray
 
 		case 0x99:
 			/* array (two-byte uint16_t for n, and then n data items follow)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagArray
 
 		case 0x9A:
 			/* array (four-byte uint32_t for n, and then n data items follow)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagArray
 
 		case 0x9B:
 			/* array (eight-byte uint64_t for n, and then n data items follow)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagArray
 
 		case 0x9F:
 			/* array, data items follow, terminated by 'break'
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagArray
 
 		case 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7:
 			/* map (0x00..0x17 pairs of data items follow)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagMap
 
 		case 0xB8:
 			/* map (one-byte uint8_t for n, and then n pairs of data items follow)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagMap
 
 		case 0xB9:
 			/* map (two-byte uint16_t for n, and then n pairs of data items follow)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagMap
 
 		case 0xBA:
 			/* map (four-byte uint32_t for n, and then n pairs of data items follow)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagMap
 
 		case 0xBB:
 			/* map (eight-byte uint64_t for n, and then n pairs of data items follow)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagMap
 
 		case 0xBF:
 			/* map, pairs of data items follow, terminated by 'break'
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagMap
 
 		case 0xC0:
 			/* text-based date/time (data item follows; see Section 3.4.1)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagDateTime
 
 		case 0xC1:
 			/* epoch-based date/time (data item follows; see Section 3.4.2)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagDateTime
 
 		case 0xC2:
 			/* unsigned bignum (data item 'byte string' follows)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagBigNum
 
 		case 0xC3:
 			/* negative bignum (data item 'byte string' follows)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagBigNum
 
 		case 0xC4:
 			/* decimal Fraction (data item 'array' follows; see Section 3.4.4)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagRational
 
 		case 0xC5:
 			/* bigfloat (data item 'array' follows; see Section 3.4.4)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagFloat
 
 		case 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4:
 			/* (tag)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTag
 
 		case 0xD5, 0xD6, 0xD7:
 			/* expected conversion (data item follows; see Section 3.4.5.2)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTag
 
 		case 0xD8, 0xD9, 0xDA, 0xDB:
 			/* (more tags; 1/2/4/8 bytes of tag number and then a data item follow)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTag
 
 		case 0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF, 0xF0, 0xF1, 0xF2, 0xF3:
 			/* (simple value)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTag
 
 		case 0xF4:
 			/* "false"
 			 */
-			this.cbor = tag
+			this = tag
 			return nil
 
 		case 0xF5:
 			/* "true"
 			 */
-			this.cbor = tag
+			this = tag
 			return nil
 
 		case 0xF6:
 			/* "null"
 			 */
-			this.cbor = tag
+			this = tag
 			return nil
 
 		case 0xF7:
 			/* "undefined"
 			 */
-			this.cbor = tag
+			this = tag
 			return nil
 
 		case 0xF8:
 			/* (simple value, one byte follows)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTag
 
 		case 0xF9:
 			/* half-precision float (two-byte IEEE 754)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagFloat
 
 		case 0xFA:
 			/* single-precision float (four-byte IEEE 754)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagFloat
 
 		case 0xFB:
 			/* double-precision float (eight-byte IEEE 754)
 			 */
-			this.cbor = tag
+			this = tag
 			return TODOTagFloat
 
 		case 0xFF:
 			/* 'break' stop code"
 			 */
-			this.cbor = tag
+			this = tag
 			return Break
 
 		default:
@@ -677,9 +674,9 @@ func (this CborObject) Read(r io.Reader) (e error){
 /*
  */
 func (this CborObject) String() string {
-	var z int = len(this.cbor)
+	var z int = len(this)
 	if 0 < z {
-		var t byte = this.cbor[0]
+		var t byte = this[0]
 		switch t {
 		case 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17:
 			return "unsigned integer 0x00..0x17 (0..23)"
