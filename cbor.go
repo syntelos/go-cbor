@@ -18,17 +18,16 @@ import (
 /*
  */
 var Break error = errors.New("CBOR Break")
+
 var ErrorUnrecognizedTag error = errors.New("Unrecognized CBOR Tag")
-var ErrorMissingTag error = errors.New("Missing CBOR Tag")
 var ErrorMissingData error = errors.New("Missing CBOR Data")
+
 var TODOTag error = errors.New("Unsupported CBOR Tag")
-var TODOTagArray error = errors.New("Unsupported CBOR Tag Array")
-var TODOTagMap error = errors.New("Unsupported CBOR Tag Map")
-var TODOTagDateTime error = errors.New("Unsupported CBOR Tag DateTime")
 var TODOTagBigNum error = errors.New("Unsupported CBOR Tag BigNum")
-var TODOTagRational error = errors.New("Unsupported CBOR Tag Rational")
-var TODOTagBigFloat error = errors.New("Unsupported CBOR Tag BigFloat")
+var TODOTagDateTime error = errors.New("Unsupported CBOR Tag DateTime")
 var TODOTagFloat error = errors.New("Unsupported CBOR Tag Float")
+var TODOTagRational error = errors.New("Unsupported CBOR Tag Rational")
+
 /*
  * Principal user interface.
  */
@@ -82,7 +81,7 @@ func (this Object) Read(r io.Reader) (e error){
 	} else {
 		var d []byte
 		var t byte = tag[0]
-		var a Object
+		var a, b Object
 
 		switch t {
 		case 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17:
@@ -423,6 +422,7 @@ func (this Object) Read(r io.Reader) (e error){
 			} else if 1 != n {
 				return ErrorMissingData
 			} else {
+				this = concatenate(this,d)
 				var z int = int(d[0])
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
@@ -448,6 +448,7 @@ func (this Object) Read(r io.Reader) (e error){
 			} else if 2 != n {
 				return ErrorMissingData
 			} else {
+				this = concatenate(this,d)
 				var z int = int(endian.BigEndian.DecodeUint16(d))
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
@@ -473,6 +474,7 @@ func (this Object) Read(r io.Reader) (e error){
 			} else if 4 != n {
 				return ErrorMissingData
 			} else {
+				this = concatenate(this,d)
 				var z uint32 = endian.BigEndian.DecodeUint32(d)
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
@@ -498,6 +500,7 @@ func (this Object) Read(r io.Reader) (e error){
 			} else if 8 != n {
 				return ErrorMissingData
 			} else {
+				this = concatenate(this,d)
 				var z uint64 = endian.BigEndian.DecodeUint64(d)
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
@@ -516,79 +519,350 @@ func (this Object) Read(r io.Reader) (e error){
 			/* UTF-8 string, UTF-8 strings follow, terminated by 'break'
 			 */
 			this = tag
-			return TODOTagArray
+			for nil == e {
+				a = make([]byte,0)
+				e = a.Read(r)
+				if nil == e {
+
+					this = concatenate(this,a)
+
+				} else if Break == e {
+					e = nil
+					break
+				} else {
+					return fmt.Errorf("Data: %w",e)
+				}
+			}
+			return nil
 
 		case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F, 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97:
 			/* array (0x00..0x17 data items follow)
 			 */
 			this = tag
-			return TODOTagArray
+			m = int(t-0x80)
+			for n = 0; n < m; n++ {
+				a = make([]byte,0)
+				e = a.Read(r)
+				if nil == e {
+
+					this = concatenate(this,a)
+
+				} else {
+					return fmt.Errorf("Data: %w",e)
+				}
+			}
+			return nil
 
 		case 0x98:
 			/* array (one-byte uint8_t for n, and then n data items follow)
 			 */
 			this = tag
-			return TODOTagArray
+			d = make([]byte,1)
+			n, e = r.Read(d)
+			if nil != e {
+				return fmt.Errorf("Data: %w",e)
+			} else if 1 != n {
+				return ErrorMissingData
+			} else {
+				this = concatenate(this,d)
+				var z int = int(d[0])
+				for n = 0; n < z; n++ {
+					a = make([]byte,0)
+					e = a.Read(r)
+					if nil == e {
+
+						this = concatenate(this,a)
+
+					} else {
+						return fmt.Errorf("Data: %w",e)
+					}
+				}
+				return nil
+			}
 
 		case 0x99:
 			/* array (two-byte uint16_t for n, and then n data items follow)
 			 */
 			this = tag
-			return TODOTagArray
+			d = make([]byte,2)
+			n, e = r.Read(d)
+			if nil != e {
+				return fmt.Errorf("Data: %w",e)
+			} else if 2 != n {
+				return ErrorMissingData
+			} else {
+				this = concatenate(this,d)
+				var x, z uint16 = 0, endian.BigEndian.DecodeUint16(d)
+				for ; x < z; x++ {
+					a = make([]byte,0)
+					e = a.Read(r)
+					if nil == e {
+
+						this = concatenate(this,a)
+
+					} else {
+						return fmt.Errorf("Data: %w",e)
+					}
+				}
+				return nil
+			}
 
 		case 0x9A:
 			/* array (four-byte uint32_t for n, and then n data items follow)
 			 */
 			this = tag
-			return TODOTagArray
+			d = make([]byte,4)
+			n, e = r.Read(d)
+			if nil != e {
+				return fmt.Errorf("Data: %w",e)
+			} else if 4 != n {
+				return ErrorMissingData
+			} else {
+				this = concatenate(this,d)
+				var x, z uint32 = 0, endian.BigEndian.DecodeUint32(d)
+				for ; x < z; x++ {
+					a = make([]byte,0)
+					e = a.Read(r)
+					if nil == e {
+
+						this = concatenate(this,a)
+
+					} else {
+						return fmt.Errorf("Data: %w",e)
+					}
+				}
+				return nil
+			}
 
 		case 0x9B:
 			/* array (eight-byte uint64_t for n, and then n data items follow)
 			 */
 			this = tag
-			return TODOTagArray
+			d = make([]byte,8)
+			n, e = r.Read(d)
+			if nil != e {
+				return fmt.Errorf("Data: %w",e)
+			} else if 8 != n {
+				return ErrorMissingData
+			} else {
+				this = concatenate(this,d)
+				var x, z uint64 = 0, endian.BigEndian.DecodeUint64(d)
+				for ; x < z; x++ {
+					a = make([]byte,0)
+					e = a.Read(r)
+					if nil == e {
+
+						this = concatenate(this,a)
+
+					} else {
+						return fmt.Errorf("Data: %w",e)
+					}
+				}
+				return nil
+			}
 
 		case 0x9F:
 			/* array, data items follow, terminated by 'break'
 			 */
 			this = tag
-			return TODOTagArray
+			for nil == e {
+				a = make([]byte,0)
+				e = a.Read(r)
+				if nil == e {
+
+					this = concatenate(this,a)
+
+				} else if Break == e {
+					e = nil
+					break
+				} else {
+					return fmt.Errorf("Data: %w",e)
+				}
+			}
+			return nil
 
 		case 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7:
 			/* map (0x00..0x17 pairs of data items follow)
 			 */
 			this = tag
-			return TODOTagMap
+			m, n = 0, int(t-0xA0)
+			for ; m < n; m++ {
+				a = make([]byte,0)
+				e = a.Read(r)
+				if nil != e {
+					return fmt.Errorf("Data: %w",e)
+				} else {
+					this = concatenate(this,a)
+
+					b = make([]byte,0)
+					e = b.Read(r)
+					if nil != e {
+						return fmt.Errorf("Data: %w",e)
+					} else {
+						this = concatenate(this,b)
+					}	
+				}
+			}
+			return nil
 
 		case 0xB8:
 			/* map (one-byte uint8_t for n, and then n pairs of data items follow)
 			 */
 			this = tag
-			return TODOTagMap
+			d = make([]byte,1)
+			n, e = r.Read(d)
+			if nil != e {
+				return fmt.Errorf("Data: %w",e)
+			} else if 1 != n {
+				return ErrorMissingData
+			} else {
+				this = concatenate(this,d)
+				var x, z uint8 = 0, uint8(d[0])
+				for x = 0; x < z; x++ {
+					a = make([]byte,0)
+					e = a.Read(r)
+					if nil != e {
+						return fmt.Errorf("Data: %w",e)
+					} else {
+						this = concatenate(this,a)
+						b = make([]byte,0)
+						e = b.Read(r)
+						if nil != e {
+							return fmt.Errorf("Data: %w",e)
+						} else {
+							this = concatenate(this,b)
+						}	
+					}
+				}
+				return nil
+			}
 
 		case 0xB9:
 			/* map (two-byte uint16_t for n, and then n pairs of data items follow)
 			 */
 			this = tag
-			return TODOTagMap
+			d = make([]byte,2)
+			n, e = r.Read(d)
+			if nil != e {
+				return fmt.Errorf("Data: %w",e)
+			} else if 2 != n {
+				return ErrorMissingData
+			} else {
+				this = concatenate(this,d)
+				var x, z uint16 = 0, endian.BigEndian.DecodeUint16(d)
+				for x = 0; x < z; x++ {
+					a = make([]byte,0)
+					e = a.Read(r)
+					if nil != e {
+						return fmt.Errorf("Data: %w",e)
+					} else {
+						this = concatenate(this,a)
+						b = make([]byte,0)
+						e = b.Read(r)
+						if nil != e {
+							return fmt.Errorf("Data: %w",e)
+						} else {
+							this = concatenate(this,b)
+						}	
+					}
+				}
+				return nil
+			}
 
 		case 0xBA:
 			/* map (four-byte uint32_t for n, and then n pairs of data items follow)
 			 */
 			this = tag
-			return TODOTagMap
+			d = make([]byte,4)
+			n, e = r.Read(d)
+			if nil != e {
+				return fmt.Errorf("Data: %w",e)
+			} else if 4 != n {
+				return ErrorMissingData
+			} else {
+				this = concatenate(this,d)
+				var x, z uint32 = 0, endian.BigEndian.DecodeUint32(d)
+				for x = 0; x < z; x++ {
+					a = make([]byte,0)
+					e = a.Read(r)
+					if nil != e {
+						return fmt.Errorf("Data: %w",e)
+					} else {
+						this = concatenate(this,a)
+						b = make([]byte,0)
+						e = b.Read(r)
+						if nil != e {
+							return fmt.Errorf("Data: %w",e)
+						} else {
+							this = concatenate(this,b)
+						}	
+					}
+				}
+				return nil
+			}
 
 		case 0xBB:
 			/* map (eight-byte uint64_t for n, and then n pairs of data items follow)
 			 */
 			this = tag
-			return TODOTagMap
+			d = make([]byte,8)
+			n, e = r.Read(d)
+			if nil != e {
+				return fmt.Errorf("Data: %w",e)
+			} else if 8 != n {
+				return ErrorMissingData
+			} else {
+				this = concatenate(this,d)
+				var x, z uint64 = 0, endian.BigEndian.DecodeUint64(d)
+				for x = 0; x < z; x++ {
+					a = make([]byte,0)
+					e = a.Read(r)
+					if nil != e {
+						return fmt.Errorf("Data: %w",e)
+					} else {
+						this = concatenate(this,a)
+						b = make([]byte,0)
+						e = b.Read(r)
+						if nil != e {
+							return fmt.Errorf("Data: %w",e)
+						} else {
+							this = concatenate(this,b)
+						}	
+					}
+				}
+				return nil
+			}
 
 		case 0xBF:
 			/* map, pairs of data items follow, terminated by 'break'
 			 */
 			this = tag
-			return TODOTagMap
+
+			for nil == e {
+				a = make([]byte,0)
+				e = a.Read(r)
+				if nil == e {
+					this = concatenate(this,a)
+
+					b = make([]byte,0)
+					e = b.Read(r)
+					if nil == e {
+						this = concatenate(this,b)
+
+					} else if Break == e {
+						e = nil
+						break
+					} else {
+						return fmt.Errorf("Data: %w",e)
+					}
+				} else if Break == e {
+					e = nil
+					break
+				} else {
+					return fmt.Errorf("Data: %w",e)
+				}
+			}
+			return nil
 
 		case 0xC0:
 			/* text-based date/time (data item follows; see Section 3.4.1)
