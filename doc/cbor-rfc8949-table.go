@@ -17,7 +17,7 @@ func usage(){
 	fmt.Fprintln(os.Stderr,`
 Synopsis
 
-    table [print|enumerate]
+    table [print|enumerate|list]
 
 Description
 
@@ -129,6 +129,20 @@ func (this Line) enumerate(){
 		fmt.Printf(":\n\treturn \"%s\"\n",this.description)
 	}
 }
+func (this Line) list(){
+	if this.first == this.last {
+
+		fmt.Printf("0x%02X\n",this.first)
+
+	} else {
+		var x, y uint8 = this.first, this.last
+
+		for ; x <= y; x++ {
+
+			fmt.Printf("0x%02X\n",x)
+		}
+	}
+}
 /*
  */
 type Table struct {
@@ -197,6 +211,14 @@ func (this *Table) enumerate(){
 		this.records[index].enumerate()
 	}
 }
+func (this *Table) list(){
+
+	var count int = table.size()
+	var index int = 0
+	for ; index < count; index++ {
+		this.records[index].list()
+	}
+}
 /*
  */
 const location_rel string = "cbor-rfc8949-table.txt"
@@ -254,6 +276,17 @@ func main(){
 					os.Exit(1)
 				} else {
 					table.enumerate()
+
+					os.Exit(0)
+				}
+
+			case "list":
+				e := table.read(fin)
+				if nil != e {
+					fmt.Fprintf(os.Stderr,"table: %v\n",e);
+					os.Exit(1)
+				} else {
+					table.list()
 
 					os.Exit(0)
 				}

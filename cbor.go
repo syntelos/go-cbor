@@ -22,12 +22,6 @@ var Break error = errors.New("CBOR Break")
 var ErrorUnrecognizedTag error = errors.New("Unrecognized CBOR Tag")
 var ErrorMissingData error = errors.New("Missing CBOR Data")
 
-var TODOTag error = errors.New("Unsupported CBOR Tag")
-var TODOTagBigNum error = errors.New("Unsupported CBOR Tag BigNum")
-var TODOTagDateTime error = errors.New("Unsupported CBOR Tag DateTime")
-var TODOTagFloat error = errors.New("Unsupported CBOR Tag Float")
-var TODOTagRational error = errors.New("Unsupported CBOR Tag Rational")
-
 /*
  * Principal user interface.
  */
@@ -376,15 +370,12 @@ func (this Object) Read(r io.Reader) (e error){
 			/* byte string, byte strings follow, terminated by 'break'
 			 */
 			this = tag
-			a = make([]byte,0)
 			for nil == e {
-
+				a = make([]byte,0)
 				e = a.Read(r)
 				if nil == e {
 
 					this = concatenate(this,a)
-
-					a = make([]byte,0)
 
 				} else if Break == e {
 					e = nil
@@ -849,9 +840,6 @@ func (this Object) Read(r io.Reader) (e error){
 					if nil == e {
 						this = concatenate(this,b)
 
-					} else if Break == e {
-						e = nil
-						break
 					} else {
 						return fmt.Errorf("Data: %w",e)
 					}
@@ -864,65 +852,191 @@ func (this Object) Read(r io.Reader) (e error){
 			}
 			return nil
 
-		case 0xC0:
-			/* text-based date/time (data item follows; see Section 3.4.1)
+		case 0xC0, 0xC1:
+			/* date/time (data item follows; see Section 3.4.1 and 3.4.2)
 			 */
 			this = tag
-			return TODOTagDateTime
-
-		case 0xC1:
-			/* epoch-based date/time (data item follows; see Section 3.4.2)
-			 */
-			this = tag
-			return TODOTagDateTime
+			a = make([]byte,0)
+			e = a.Read(r)
+			if nil == e {
+				this = concatenate(this,a)
+				return nil
+			} else {
+				return fmt.Errorf("Data: %w",e)
+			}
 
 		case 0xC2:
 			/* unsigned bignum (data item 'byte string' follows)
 			 */
 			this = tag
-			return TODOTagBigNum
+			a = make([]byte,0)
+			e = a.Read(r)
+			if nil == e {
+				this = concatenate(this,a)
+				return nil
+			} else {
+				return fmt.Errorf("Data: %w",e)
+			}
 
 		case 0xC3:
 			/* negative bignum (data item 'byte string' follows)
 			 */
 			this = tag
-			return TODOTagBigNum
+			a = make([]byte,0)
+			e = a.Read(r)
+			if nil == e {
+				this = concatenate(this,a)
+				return nil
+			} else {
+				return fmt.Errorf("Data: %w",e)
+			}
 
 		case 0xC4:
 			/* decimal Fraction (data item 'array' follows; see Section 3.4.4)
 			 */
 			this = tag
-			return TODOTagRational
+			a = make([]byte,0)
+			e = a.Read(r)
+			if nil == e {
+				this = concatenate(this,a)
+				return nil
+			} else {
+				return fmt.Errorf("Data: %w",e)
+			}
 
 		case 0xC5:
 			/* bigfloat (data item 'array' follows; see Section 3.4.4)
 			 */
 			this = tag
-			return TODOTagFloat
+			a = make([]byte,0)
+			e = a.Read(r)
+			if nil == e {
+				this = concatenate(this,a)
+				return nil
+			} else {
+				return fmt.Errorf("Data: %w",e)
+			}
 
 		case 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4:
 			/* (tag)
 			 */
 			this = tag
-			return TODOTag
+			return nil
 
 		case 0xD5, 0xD6, 0xD7:
 			/* expected conversion (data item follows; see Section 3.4.5.2)
 			 */
 			this = tag
-			return TODOTag
+			a = make([]byte,0)
+			e = a.Read(r)
+			if nil == e {
+				this = concatenate(this,a)
+				return nil
+			} else {
+				return fmt.Errorf("Data: %w",e)
+			}
 
-		case 0xD8, 0xD9, 0xDA, 0xDB:
+		case 0xD8:
 			/* (more tags; 1/2/4/8 bytes of tag number and then a data item follow)
 			 */
 			this = tag
-			return TODOTag
+			a = make([]byte,1)
+			n, e = r.Read(a)
+			if nil != e {
+				return fmt.Errorf("Data: %w",e)
+			} else if 1 != n {
+				return fmt.Errorf("Data expected (1) found (%d).",n)
+			} else {
+				this = concatenate(this,a)
+
+				b = make([]byte,0)
+				e = b.Read(r)
+				if nil == e {
+					this = concatenate(this,b)
+
+					return nil
+				} else {
+					return fmt.Errorf("Data: %w",e)
+				}
+			}
+
+		case 0xD9:
+			/* (more tags; 1/2/4/8 bytes of tag number and then a data item follow)
+			 */
+			this = tag
+			a = make([]byte,2)
+			n, e = r.Read(a)
+			if nil != e {
+				return fmt.Errorf("Data: %w",e)
+			} else if 2 != n {
+				return fmt.Errorf("Data expected (2) found (%d).",n)
+			} else {
+				this = concatenate(this,a)
+
+				b = make([]byte,0)
+				e = b.Read(r)
+				if nil == e {
+					this = concatenate(this,b)
+
+					return nil
+				} else {
+					return fmt.Errorf("Data: %w",e)
+				}
+			}
+
+		case 0xDA:
+			/* (more tags; 1/2/4/8 bytes of tag number and then a data item follow)
+			 */
+			this = tag
+			a = make([]byte,4)
+			n, e = r.Read(a)
+			if nil != e {
+				return fmt.Errorf("Data: %w",e)
+			} else if 4 != n {
+				return fmt.Errorf("Data expected (4) found (%d).",n)
+			} else {
+				this = concatenate(this,a)
+
+				b = make([]byte,0)
+				e = b.Read(r)
+				if nil == e {
+					this = concatenate(this,b)
+
+					return nil
+				} else {
+					return fmt.Errorf("Data: %w",e)
+				}
+			}
+
+		case 0xDB:
+			/* (more tags; 1/2/4/8 bytes of tag number and then a data item follow)
+			 */
+			this = tag
+			a = make([]byte,8)
+			n, e = r.Read(a)
+			if nil != e {
+				return fmt.Errorf("Data: %w",e)
+			} else if 8 != n {
+				return fmt.Errorf("Data expected (8) found (%d).",n)
+			} else {
+				this = concatenate(this,a)
+
+				b = make([]byte,0)
+				e = b.Read(r)
+				if nil == e {
+					this = concatenate(this,b)
+
+					return nil
+				} else {
+					return fmt.Errorf("Data: %w",e)
+				}
+			}
 
 		case 0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF, 0xF0, 0xF1, 0xF2, 0xF3:
 			/* (simple value)
 			 */
 			this = tag
-			return TODOTag
+			return nil
 
 		case 0xF4:
 			/* "false"
@@ -952,25 +1066,61 @@ func (this Object) Read(r io.Reader) (e error){
 			/* (simple value, one byte follows)
 			 */
 			this = tag
-			return TODOTag
+			d = make([]byte,1)
+			n, e = r.Read(d)
+			if nil != e {
+				return fmt.Errorf("Data: %w",e)
+			} else if 1 != n {
+				return ErrorMissingData
+			} else {
+				this = concatenate(this,d)
+				return nil
+			}
 
 		case 0xF9:
 			/* half-precision float (two-byte IEEE 754)
 			 */
 			this = tag
-			return TODOTagFloat
+			d = make([]byte,2)
+			n, e = r.Read(d)
+			if nil != e {
+				return fmt.Errorf("Data: %w",e)
+			} else if 2 != n {
+				return ErrorMissingData
+			} else {
+				this = concatenate(this,d)
+				return nil
+			}
 
 		case 0xFA:
 			/* single-precision float (four-byte IEEE 754)
 			 */
 			this = tag
-			return TODOTagFloat
+			d = make([]byte,4)
+			n, e = r.Read(d)
+			if nil != e {
+				return fmt.Errorf("Data: %w",e)
+			} else if 4 != n {
+				return ErrorMissingData
+			} else {
+				this = concatenate(this,d)
+				return nil
+			}
 
 		case 0xFB:
 			/* double-precision float (eight-byte IEEE 754)
 			 */
 			this = tag
-			return TODOTagFloat
+			d = make([]byte,8)
+			n, e = r.Read(d)
+			if nil != e {
+				return fmt.Errorf("Data: %w",e)
+			} else if 8 != n {
+				return ErrorMissingData
+			} else {
+				this = concatenate(this,d)
+				return nil
+			}
 
 		case 0xFF:
 			/* 'break' stop code"
