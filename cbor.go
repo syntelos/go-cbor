@@ -10,10 +10,13 @@
 package cbor
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
 	"github.com/syntelos/go-endian"
+	"math"
+	"math/big"
 )
 /*
  */
@@ -371,7 +374,7 @@ func (this Object) Read(r io.Reader) (e error){
 			 */
 			this = tag
 			for nil == e {
-				a = make([]byte,0)
+				a = Object{}
 				e = a.Read(r)
 				if nil == e {
 
@@ -511,7 +514,7 @@ func (this Object) Read(r io.Reader) (e error){
 			 */
 			this = tag
 			for nil == e {
-				a = make([]byte,0)
+				a = Object{}
 				e = a.Read(r)
 				if nil == e {
 
@@ -532,7 +535,7 @@ func (this Object) Read(r io.Reader) (e error){
 			this = tag
 			m = int(t-0x80)
 			for n = 0; n < m; n++ {
-				a = make([]byte,0)
+				a = Object{}
 				e = a.Read(r)
 				if nil == e {
 
@@ -558,7 +561,7 @@ func (this Object) Read(r io.Reader) (e error){
 				this = concatenate(this,d)
 				var z int = int(d[0])
 				for n = 0; n < z; n++ {
-					a = make([]byte,0)
+					a = Object{}
 					e = a.Read(r)
 					if nil == e {
 
@@ -585,7 +588,7 @@ func (this Object) Read(r io.Reader) (e error){
 				this = concatenate(this,d)
 				var x, z uint16 = 0, endian.BigEndian.DecodeUint16(d)
 				for ; x < z; x++ {
-					a = make([]byte,0)
+					a = Object{}
 					e = a.Read(r)
 					if nil == e {
 
@@ -612,7 +615,7 @@ func (this Object) Read(r io.Reader) (e error){
 				this = concatenate(this,d)
 				var x, z uint32 = 0, endian.BigEndian.DecodeUint32(d)
 				for ; x < z; x++ {
-					a = make([]byte,0)
+					a = Object{}
 					e = a.Read(r)
 					if nil == e {
 
@@ -639,7 +642,7 @@ func (this Object) Read(r io.Reader) (e error){
 				this = concatenate(this,d)
 				var x, z uint64 = 0, endian.BigEndian.DecodeUint64(d)
 				for ; x < z; x++ {
-					a = make([]byte,0)
+					a = Object{}
 					e = a.Read(r)
 					if nil == e {
 
@@ -657,7 +660,7 @@ func (this Object) Read(r io.Reader) (e error){
 			 */
 			this = tag
 			for nil == e {
-				a = make([]byte,0)
+				a = Object{}
 				e = a.Read(r)
 				if nil == e {
 
@@ -678,7 +681,7 @@ func (this Object) Read(r io.Reader) (e error){
 			this = tag
 			m, n = 0, int(t-0xA0)
 			for ; m < n; m++ {
-				a = make([]byte,0)
+				a = Object{}
 				e = a.Read(r)
 				if nil != e {
 					return fmt.Errorf("Data: %w",e)
@@ -710,7 +713,7 @@ func (this Object) Read(r io.Reader) (e error){
 				this = concatenate(this,d)
 				var x, z uint8 = 0, uint8(d[0])
 				for x = 0; x < z; x++ {
-					a = make([]byte,0)
+					a = Object{}
 					e = a.Read(r)
 					if nil != e {
 						return fmt.Errorf("Data: %w",e)
@@ -742,7 +745,7 @@ func (this Object) Read(r io.Reader) (e error){
 				this = concatenate(this,d)
 				var x, z uint16 = 0, endian.BigEndian.DecodeUint16(d)
 				for x = 0; x < z; x++ {
-					a = make([]byte,0)
+					a = Object{}
 					e = a.Read(r)
 					if nil != e {
 						return fmt.Errorf("Data: %w",e)
@@ -774,7 +777,7 @@ func (this Object) Read(r io.Reader) (e error){
 				this = concatenate(this,d)
 				var x, z uint32 = 0, endian.BigEndian.DecodeUint32(d)
 				for x = 0; x < z; x++ {
-					a = make([]byte,0)
+					a = Object{}
 					e = a.Read(r)
 					if nil != e {
 						return fmt.Errorf("Data: %w",e)
@@ -806,7 +809,7 @@ func (this Object) Read(r io.Reader) (e error){
 				this = concatenate(this,d)
 				var x, z uint64 = 0, endian.BigEndian.DecodeUint64(d)
 				for x = 0; x < z; x++ {
-					a = make([]byte,0)
+					a = Object{}
 					e = a.Read(r)
 					if nil != e {
 						return fmt.Errorf("Data: %w",e)
@@ -830,7 +833,7 @@ func (this Object) Read(r io.Reader) (e error){
 			this = tag
 
 			for nil == e {
-				a = make([]byte,0)
+				a = Object{}
 				e = a.Read(r)
 				if nil == e {
 					this = concatenate(this,a)
@@ -856,7 +859,7 @@ func (this Object) Read(r io.Reader) (e error){
 			/* date/time (data item follows; see Section 3.4.1 and 3.4.2)
 			 */
 			this = tag
-			a = make([]byte,0)
+			a = Object{}
 			e = a.Read(r)
 			if nil == e {
 				this = concatenate(this,a)
@@ -869,7 +872,7 @@ func (this Object) Read(r io.Reader) (e error){
 			/* unsigned bignum (data item 'byte string' follows)
 			 */
 			this = tag
-			a = make([]byte,0)
+			a = Object{}
 			e = a.Read(r)
 			if nil == e {
 				this = concatenate(this,a)
@@ -882,7 +885,7 @@ func (this Object) Read(r io.Reader) (e error){
 			/* negative bignum (data item 'byte string' follows)
 			 */
 			this = tag
-			a = make([]byte,0)
+			a = Object{}
 			e = a.Read(r)
 			if nil == e {
 				this = concatenate(this,a)
@@ -895,7 +898,7 @@ func (this Object) Read(r io.Reader) (e error){
 			/* decimal Fraction (data item 'array' follows; see Section 3.4.4)
 			 */
 			this = tag
-			a = make([]byte,0)
+			a = Object{}
 			e = a.Read(r)
 			if nil == e {
 				this = concatenate(this,a)
@@ -908,7 +911,7 @@ func (this Object) Read(r io.Reader) (e error){
 			/* bigfloat (data item 'array' follows; see Section 3.4.4)
 			 */
 			this = tag
-			a = make([]byte,0)
+			a = Object{}
 			e = a.Read(r)
 			if nil == e {
 				this = concatenate(this,a)
@@ -927,7 +930,7 @@ func (this Object) Read(r io.Reader) (e error){
 			/* expected conversion (data item follows; see Section 3.4.5.2)
 			 */
 			this = tag
-			a = make([]byte,0)
+			a = Object{}
 			e = a.Read(r)
 			if nil == e {
 				this = concatenate(this,a)
@@ -1253,12 +1256,14 @@ func (this Object) String() string {
 	}
 }
 /*
+ * Resolve tag structure of object.
  */
 func (this Object) HasTag() bool {
 	var z int = len(this)
 	return (0 < z)
 }
 /*
+ * Resolve tag value of object.
  */
 func (this Object) Tag() Tag {
 	if this.HasTag() {
@@ -1268,17 +1273,19 @@ func (this Object) Tag() Tag {
 	}
 }
 /*
+ * Resolve major type from tag.
  */
 func (this Object) Major() Major {
 	if this.HasTag() {
-		var tag Tag = this.Tag()
-		var major Major = Major((tag & 0xE0)>>5)
-		return major
+		var tag byte = byte(this.Tag())
+		var major byte = ((tag & 0xE0)>>5)
+		return Major(major)
 	} else {
 		return Major(0)
 	}
 }
 /*
+ * Describe major type of tag.
  */
 func (this Object) MajorString() string {
 	if this.HasTag() {
@@ -1297,39 +1304,29 @@ func (this Object) MajorString() string {
 			return "map"
 		case MajorTagged:
 			return "tagged data item"
-		case MajorSimple:
-			return "float, simple, break"
 		default:
-			return ""
+			return "float, simple, break"
 		}
 	} else {
 		return ""
 	}
 }
 /*
+ * Resolve text object type.
  */
 func (this Object) HasText() bool {
 	return (this.HasTag() && MajorText == this.Major())
 }
 /*
+ * Resolve text object content.
  */
 func (this Object) Text() (s string) {
-	if this.HasText() {
-		var tag Tag = this.Tag()
-		switch tag {
-		case 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77:
-			var m int = int(tag-0x60)
-			var text []byte = this[1:(m+1)]
-			return string(text)
-
-		case 0x78:
-		case 0x79:
-		case 0x7A:
-		case 0x7B:
-
-		}
+	var a any = this.Decode()
+	if nil != a {
+		return a.(string)
+	} else {
+		return ""
 	}
-	return ""
 }
 /*
  */
@@ -1361,4 +1358,639 @@ func concatenate(a []byte, b []byte) (c []byte) {
 			return copier(c,a_len,c_len,b,0,b_len)
 		}
 	}
+}
+/*
+ * Define object as major type tag.
+ */
+func Define(m Major) (this Object) {
+
+	this = make([]byte,1)
+
+	var major byte = ((byte(m) & 7) << 5)
+
+	this[0] = major
+
+	return this
+}
+/*
+ * Define object as major type tag refined by size.
+ */
+func (this Object) Refine(size uint64) (Object) {
+
+	var major Major = this.Major()
+	switch major {
+	case MajorUint:
+		if 0x17 >= size {
+			this[0] = byte(size)
+		} else if 0xFF >= size {
+			this[0] = 0x18
+		} else if 0xFFFF >= size {
+			this[0] = 0x19
+		} else if 0xFFFFFFFF >= size {
+			this[0] = 0x1A
+		} else if 0xFFFFFFFFFFFFFFFF >= size {
+			this[0] = 0x1B
+		}
+		return this
+
+	case MajorSint:
+		if 0x17 >= size {
+			this[0] = byte(size)+0x20
+		} else if 0xFF >= size {
+			this[0] = 0x38
+		} else if 0xFFFF >= size {
+			this[0] = 0x39
+		} else if 0xFFFFFFFF >= size {
+			this[0] = 0x3A
+		} else if 0xFFFFFFFFFFFFFFFF >= size {
+			this[0] = 0x3B
+		}
+		return this
+
+	case MajorBlob:
+		if 0x17 >= size {
+			this[0] = byte(size)+0x40
+		} else if 0xFF >= size {
+			this[0] = 0x58
+		} else if 0xFFFF >= size {
+			this[0] = 0x59
+		} else if 0xFFFFFFFF >= size {
+			this[0] = 0x5A
+		} else if 0xFFFFFFFFFFFFFFFF >= size {
+			this[0] = 0x5B
+		}
+		return this
+
+	case MajorText:
+		if 0x17 >= size {
+			this[0] = byte(size)+0x60
+		} else if 0xFF >= size {
+			this[0] = 0x78
+		} else if 0xFFFF >= size {
+			this[0] = 0x79
+		} else if 0xFFFFFFFF >= size {
+			this[0] = 0x7A
+		} else if 0xFFFFFFFFFFFFFFFF >= size {
+			this[0] = 0x7B
+		}
+		return this
+
+	case MajorArray:
+		if 0x17 >= size {
+			this[0] = byte(size)+0x80
+		} else if 0xFF >= size {
+			this[0] = 0x98
+		} else if 0xFFFF >= size {
+			this[0] = 0x99
+		} else if 0xFFFFFFFF >= size {
+			this[0] = 0x9A
+		} else if 0xFFFFFFFFFFFFFFFF >= size {
+			this[0] = 0x9B
+		}
+		return this
+
+	case MajorMap:
+		if 0x17 >= size {
+			this[0] = byte(size)+0xA0
+		} else if 0xFF >= size {
+			this[0] = 0xB8
+		} else if 0xFFFF >= size {
+			this[0] = 0xB9
+		} else if 0xFFFFFFFF >= size {
+			this[0] = 0xBA
+		} else if 0xFFFFFFFFFFFFFFFF >= size {
+			this[0] = 0xBB
+		}
+		return this
+	}
+	return this
+}
+
+/*
+ * Define object content.
+ */
+func Encode(a any) (this Object) {
+	switch a.(type) {
+
+	case byte:
+		this = Define(MajorUint).Refine(1)
+		var hbo []byte = []byte{a.(byte)}
+		this = concatenate(this,hbo)
+	case uint16:
+		this = Define(MajorUint).Refine(2)
+		var hbo []byte = make([]byte,2)
+		endian.BigEndian.EncodeUint16(hbo,a.(uint16))
+		this = concatenate(this,hbo)
+	case uint32:
+		this = Define(MajorUint).Refine(4)
+		var hbo []byte = make([]byte,4)
+		endian.BigEndian.EncodeUint32(hbo,a.(uint32))
+		this = concatenate(this,hbo)
+	case uint64:
+		this = Define(MajorUint).Refine(8)
+		var hbo []byte = make([]byte,8)
+		endian.BigEndian.EncodeUint64(hbo,a.(uint64))
+		this = concatenate(this,hbo)
+
+	case int8:
+		this = Define(MajorSint).Refine(1)
+		var hbo []byte = []byte{a.(byte)}
+		this = concatenate(this,hbo)
+	case int16:
+		this = Define(MajorSint).Refine(2)
+		var hbo []byte = make([]byte,2)
+		endian.BigEndian.EncodeUint16(hbo,a.(uint16))
+		this = concatenate(this,hbo)
+	case int32:
+		this = Define(MajorSint).Refine(4)
+		var hbo []byte = make([]byte,4)
+		endian.BigEndian.EncodeUint32(hbo,a.(uint32))
+		this = concatenate(this,hbo)
+	case int64:
+		this = Define(MajorSint).Refine(8)
+		var hbo []byte = make([]byte,8)
+		endian.BigEndian.EncodeUint64(hbo,a.(uint64))
+		this = concatenate(this,hbo)
+
+	case []byte:
+		this = Define(MajorBlob)
+		var bry []byte = a.([]byte)
+		var brz uint64 = uint64(len(bry))
+		this = this.Refine(brz)
+		this = concatenate(this,bry)
+
+	case string:
+		this = Define(MajorText)
+		var str string = a.(string)
+		var stz uint64 = uint64(len(str))
+		this = this.Refine(stz)
+		this = concatenate(this,[]byte(str))
+
+	case []any:
+		this = Define(MajorArray)
+		var ary []any = a.([]any)
+		var arz uint64 = uint64(len(ary))
+		this = this.Refine(arz)
+		for _, v := range ary {
+			var vo Object = Encode(v)
+			this = concatenate(this,[]byte(vo))
+		}
+
+	case map[any]any:
+		this = Define(MajorMap)
+		var mmm map[any]any = a.(map[any]any)
+		var mmz uint64 = uint64(len(mmm))
+		this = this.Refine(mmz)
+		for k, v := range mmm {
+			var ko Object = Encode(k)
+			this = concatenate(this,[]byte(ko))
+
+			var vo Object = Encode(v)
+			this = concatenate(this,[]byte(vo))
+		}
+
+	}
+	return this
+}
+/*
+ * Resolve object content.
+ */
+func (this Object) Decode() (a any){
+	if this.HasTag() {
+		var tag Tag = this.Tag()
+		switch tag {
+		case 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17:
+			return uint8(tag)
+		case 0x18:
+			var cnt uint8 = this[1]
+			var text []byte = this[2:(2+cnt)]
+			switch cnt {
+			case 2:
+				return endian.BigEndian.DecodeUint16(text)
+			case 4:
+				return endian.BigEndian.DecodeUint32(text)
+			case 8:
+				return endian.BigEndian.DecodeUint64(text)
+			default:
+				var value big.Int
+				value.SetBytes(text)
+				return value
+			}
+		case 0x19:
+			var cnt_ary []byte = this[1:2]
+			var cnt uint16 = endian.BigEndian.DecodeUint16(cnt_ary)
+			var text []byte = this[3:(3+cnt)]
+			var value big.Int
+			value.SetBytes(text)
+			return value
+		case 0x1A:
+			var cnt_ary []byte = this[1:4]
+			var cnt uint32 = endian.BigEndian.DecodeUint32(cnt_ary)
+			var text []byte = this[5:(5+cnt)]
+			var value big.Int
+			value.SetBytes(text)
+			return value
+		case 0x1B:
+			var cnt_ary []byte = this[1:8]
+			var cnt uint32 = endian.BigEndian.DecodeUint32(cnt_ary)
+			var text []byte = this[9:(9+cnt)]
+			var value big.Int
+			value.SetBytes(text)
+			return value
+		case 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37:
+			return (-1-int(tag))
+		case 0x38:
+			var cnt uint8 = this[1]
+			var text []byte = this[2:(2+cnt)]
+			switch cnt {
+			case 2:
+				var value uint16 = endian.BigEndian.DecodeUint16(text)
+				return int16(value)
+			case 4:
+				var value uint32 = endian.BigEndian.DecodeUint32(text)
+				return int32(value)
+			case 8:
+				var value uint64 = endian.BigEndian.DecodeUint64(text)
+				return int64(value)
+			default:
+				var value big.Int
+				value.SetBytes(text)
+				return value
+			}
+		case 0x39:
+			var cnt_ary []byte = this[1:2]
+			var cnt uint16 = endian.BigEndian.DecodeUint16(cnt_ary)
+			var text []byte = this[3:(3+cnt)]
+			var value big.Int
+			value.SetBytes(text)
+			return value
+		case 0x3A:
+			var cnt_ary []byte = this[1:4]
+			var cnt uint32 = endian.BigEndian.DecodeUint32(cnt_ary)
+			var text []byte = this[5:(5+cnt)]
+			var value big.Int
+			value.SetBytes(text)
+			return value
+		case 0x3B:
+			var cnt_ary []byte = this[1:8]
+			var cnt uint32 = endian.BigEndian.DecodeUint32(cnt_ary)
+			var text []byte = this[9:(9+cnt)]
+			var value big.Int
+			value.SetBytes(text)
+			return value
+		case 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57:
+			var m int = int(tag-0x60)
+			var text []byte = this[1:(m+1)]
+			return text
+		case 0x58:
+			var cnt uint8 = this[1]
+			var text []byte = this[2:(3+cnt)]
+			return text
+		case 0x59:
+			var cnt_ary []byte = this[1:2]
+			var cnt uint16 = endian.BigEndian.DecodeUint16(cnt_ary)
+			var text []byte = this[3:(3+cnt)]
+			return text
+		case 0x5A:
+			var cnt_ary []byte = this[1:4]
+			var cnt uint32 = endian.BigEndian.DecodeUint32(cnt_ary)
+			var text []byte = this[5:(5+cnt)]
+			return text
+		case 0x5B:
+			var cnt_ary []byte = this[1:8]
+			var cnt uint64 = endian.BigEndian.DecodeUint64(cnt_ary)
+			var text []byte = this[9:(9+cnt)]
+			return text
+		case 0x5F:
+			var bary []byte
+			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
+			for true {
+				var o Object = Object{}
+				var e error = o.Read(b)
+				if nil != e {
+					break
+				} else {
+					var src []byte = o.Decode().([]byte)
+					bary = concatenate(bary, src)
+				}
+			}
+			return bary
+		case 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77:
+			var m int = int(tag-0x60)
+			var text []byte = this[1:(m+1)]
+			return string(text)
+		case 0x78:
+			var cnt uint8 = this[1]
+			var text []byte = this[2:(3+cnt)]
+			return string(text)
+		case 0x79:
+			var cnt_ary []byte = this[1:2]
+			var cnt uint16 = endian.BigEndian.DecodeUint16(cnt_ary)
+			var text []byte = this[3:(3+cnt)]
+			return string(text)
+		case 0x7A:
+			var cnt_ary []byte = this[1:4]
+			var cnt uint32 = endian.BigEndian.DecodeUint32(cnt_ary)
+			var text []byte = this[5:(5+cnt)]
+			return string(text)
+		case 0x7B:
+			var cnt_ary []byte = this[1:8]
+			var cnt uint64 = endian.BigEndian.DecodeUint64(cnt_ary)
+			var text []byte = this[9:(9+cnt)]
+			return string(text)
+		case 0x7F:
+			var bary []byte
+			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
+			for true {
+				var o Object = Object{}
+				var e error = o.Read(b)
+				if nil != e {
+					break
+				} else {
+					var src []byte = o.Decode().([]byte)
+					bary = concatenate(bary, src)
+				}
+			}
+			return string(bary)
+		case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F, 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97:
+			var m, n int = int(tag-0x80), 0
+			var a []any = make([]any,m)
+			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
+			var e error
+			for n = 0; n < m; n++ {
+				var o Object = Object{}
+				e = o.Read(b)
+				if nil != e {
+					break
+				} else {
+					a[n] = o.Decode()
+				}
+			}
+			return a
+		case 0x98:
+			var m, n uint8 = uint8(this[1]), 0
+			var a []any = make([]any,m)
+			var b *bytes.Buffer = bytes.NewBuffer(this[2:])
+			var e error
+			for n = 0; n < m; n++ {
+				var o Object = Object{}
+				e = o.Read(b)
+				if nil != e {
+					break
+				} else {
+					a[n] = o.Decode()
+				}
+			}
+			return a
+		case 0x99:
+			var m, n uint16 = endian.BigEndian.DecodeUint16(this[1:2]), 0
+			var a []any = make([]any,m)
+			var b *bytes.Buffer = bytes.NewBuffer(this[3:])
+			var e error
+			for n = 0; n < m; n++ {
+				var o Object = Object{}
+				e = o.Read(b)
+				if nil != e {
+					break
+				} else {
+					a[n] = o.Decode()
+				}
+			}
+			return a
+		case 0x9A:
+			var m, n uint32 = endian.BigEndian.DecodeUint32(this[1:4]), 0
+			var a []any = make([]any,m)
+			var b *bytes.Buffer = bytes.NewBuffer(this[5:])
+			var e error
+			for n = 0; n < m; n++ {
+				var o Object = Object{}
+				e = o.Read(b)
+				if nil != e {
+					break
+				} else {
+					a[n] = o.Decode()
+				}
+			}
+			return a
+		case 0x9B:
+			var m, n uint64 = endian.BigEndian.DecodeUint64(this[1:8]), 0
+			var a []any = make([]any,m)
+			var b *bytes.Buffer = bytes.NewBuffer(this[9:])
+			var e error
+			for n = 0; n < m; n++ {
+				var o Object = Object{}
+				e = o.Read(b)
+				if nil != e {
+					break
+				} else {
+					a[n] = o.Decode()
+				}
+			}
+			return a
+		case 0x9F:
+			var m, n uint64 = endian.BigEndian.DecodeUint64(this[1:8]), 0
+			var a []any = make([]any,m)
+			var b *bytes.Buffer = bytes.NewBuffer(this[9:])
+			var e error
+			for n = 0; n < m; n++ {
+				var o Object = Object{}
+				e = o.Read(b)
+				if nil != e {
+					break
+				} else {
+					a[n] = o.Decode()
+				}
+			}
+			return a
+		case 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7:
+			var m, n int = int(tag-0x80), 0
+			var a map[any]any = make(map[any]any,m)
+			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
+			var e error
+			for n = 0; n < m; n++ {
+				var ko Object = Object{}
+				e = ko.Read(b)
+				if nil != e {
+					break
+				} else {
+					var k any = ko.Decode()
+					var vo Object = Object{}
+					e = vo.Read(b)
+					if nil != e {
+						break
+					} else {
+						var v any = vo.Decode()
+						a[k] = v
+					}
+				}
+			}
+			return a
+		case 0xB8:
+			var m, n uint8 = uint8(this[1]), 0
+			var a map[any]any = make(map[any]any,m)
+			var b *bytes.Buffer = bytes.NewBuffer(this[2:])
+			var e error
+			for n = 0; n < m; n++ {
+				var ko Object = Object{}
+				e = ko.Read(b)
+				if nil != e {
+					break
+				} else {
+					var k any = ko.Decode()
+					var vo Object = Object{}
+					e = vo.Read(b)
+					if nil != e {
+						break
+					} else {
+						var v any = vo.Decode()
+						a[k] = v
+					}
+				}
+			}
+			return a
+		case 0xB9:
+			var m, n uint16 = endian.BigEndian.DecodeUint16(this[1:2]), 0
+			var a map[any]any = make(map[any]any,m)
+			var b *bytes.Buffer = bytes.NewBuffer(this[3:])
+			var e error
+			for n = 0; n < m; n++ {
+				var ko Object = Object{}
+				e = ko.Read(b)
+				if nil != e {
+					break
+				} else {
+					var k any = ko.Decode()
+					var vo Object = Object{}
+					e = vo.Read(b)
+					if nil != e {
+						break
+					} else {
+						var v any = vo.Decode()
+						a[k] = v
+					}
+				}
+			}
+			return a
+		case 0xBA:
+			var m, n uint32 = endian.BigEndian.DecodeUint32(this[1:4]), 0
+			var a map[any]any = make(map[any]any,m)
+			var b *bytes.Buffer = bytes.NewBuffer(this[5:])
+			var e error
+			for n = 0; n < m; n++ {
+				var ko Object = Object{}
+				e = ko.Read(b)
+				if nil != e {
+					break
+				} else {
+					var k any = ko.Decode()
+					var vo Object = Object{}
+					e = vo.Read(b)
+					if nil != e {
+						break
+					} else {
+						var v any = vo.Decode()
+						a[k] = v
+					}
+				}
+			}
+			return a
+		case 0xBB:
+			var m, n uint64 = endian.BigEndian.DecodeUint64(this[1:8]), 0
+			var a map[any]any = make(map[any]any,m)
+			var b *bytes.Buffer = bytes.NewBuffer(this[9:])
+			var e error
+			for n = 0; n < m; n++ {
+				var ko Object = Object{}
+				e = ko.Read(b)
+				if nil != e {
+					break
+				} else {
+					var k any = ko.Decode()
+					var vo Object = Object{}
+					e = vo.Read(b)
+					if nil != e {
+						break
+					} else {
+						var v any = vo.Decode()
+						a[k] = v
+					}
+				}
+			}
+			return a
+		case 0xBF:
+			var a map[any]any = make(map[any]any,1)
+			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
+			var e error = nil
+			for nil == e {
+				var ko Object = Object{}
+				e = ko.Read(b)
+				if nil != e {
+					break
+				} else {
+					var k any = ko.Decode()
+					var vo Object = Object{}
+					e = vo.Read(b)
+					if nil != e {
+						break
+					} else {
+						var v any = vo.Decode()
+						a[k] = v
+					}
+				}
+			}
+			return a
+		case 0xC0, 0xC1:
+			var a Object = Object{}
+			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
+			a.Read(b)
+			return a.Decode()
+		case 0xC2, 0xC3:
+			var a big.Int
+			a.SetBytes(this[1:])
+			return a
+		case 0xC4:
+			var a Object = Object{}
+			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
+			a.Read(b)
+			var c []int64 = a.Decode().([]int64)
+			var r *big.Rat = big.NewRat( c[0], c[1]) // [TODO] (review)
+			return *r
+		case 0xC5:
+			// [TODO] (decode) "bigfloat"
+		case 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4:
+			var a byte = (uint8(tag)-0xC6) // [TODO] (decode review)
+			return a
+		case 0xD5, 0xD6, 0xD7:
+			// [TODO] (decode) "expected conversion"
+		case 0xD8, 0xD9, 0xDA, 0xDB:
+			// [TODO] (decode) "tagged data"
+		case 0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF, 0xF0, 0xF1, 0xF2, 0xF3:
+			var a byte = (uint8(tag)-0xE0) // [TODO] (decode review)
+			return a
+		case 0xF4:
+			return false
+		case 0xF5:
+			return true
+		case 0xF6, 0xF7:
+			return nil   // "null" and "undefined"
+		case 0xF8:
+			var a uint8 = this[1]
+			return a
+		case 0xF9:
+			// [TODO] (review) missing support for float16
+		case 0xFA:
+			var text []byte = this[1:4]
+			var bits uint32 = endian.BigEndian.DecodeUint32(text)
+			return math.Float32frombits(bits)
+
+		case 0xFB:
+			var text []byte = this[1:8]
+			var bits uint64 = endian.BigEndian.DecodeUint64(text)
+			return math.Float64frombits(bits)
+
+		case 0xFF:
+			return Break
+		}
+	}
+	return nil
 }
