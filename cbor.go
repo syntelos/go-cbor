@@ -1548,7 +1548,6 @@ func Encode(a any) (this Object) {
 			var vo Object = Encode(v)
 			this = concatenate(this,[]byte(vo))
 		}
-
 	}
 	return this
 }
@@ -1949,24 +1948,17 @@ func (this Object) Decode() (a any){
 			a.SetBytes(this[1:])
 			return a
 		case 0xC4:
-			var a Object = Object{}
-			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
-			a.Read(b)
-			var c []int64 = a.Decode().([]int64)
-			var r *big.Rat = big.NewRat( c[0], c[1]) // [TODO] (review)
-			return *r
+			// [TODO] rational
 		case 0xC5:
-			// [TODO] (decode) "bigfloat"
+			// [TODO] bigfloat
 		case 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4:
-			var a byte = (uint8(tag)-0xC6) // [TODO] (decode review)
-			return a
+			// [TODO] tag (content hints)
 		case 0xD5, 0xD6, 0xD7:
-			// [TODO] (decode) "expected conversion"
+			// [TODO] expected conversion (base)
 		case 0xD8, 0xD9, 0xDA, 0xDB:
-			// [TODO] (decode) "tagged data"
+			// [TODO] tagged data
 		case 0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF, 0xF0, 0xF1, 0xF2, 0xF3:
-			var a byte = (uint8(tag)-0xE0) // [TODO] (decode review)
-			return a
+			// [TODO] simple value
 		case 0xF4:
 			return false
 		case 0xF5:
@@ -1977,7 +1969,7 @@ func (this Object) Decode() (a any){
 			var a uint8 = this[1]
 			return a
 		case 0xF9:
-			// [TODO] (review) missing support for float16
+			// [TODO] float16
 		case 0xFA:
 			var text []byte = this[1:4]
 			var bits uint32 = endian.BigEndian.DecodeUint32(text)
