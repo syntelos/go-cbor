@@ -51,51 +51,47 @@ func rewrite(src []byte) (string) {
 
 	return string(tgt)
 }
-func (this Line) ctor(inl []byte) (Line) {
-	var x, z int = 0, len(inl)
-	var lhs []byte
-	var f, l string
-	var n, m uint64
+func (this Line) read(inl []byte) (Line) {
+
+	var lhs, rhs []byte
+
+	var n uint64
 	var e error
 
-	for ; x < z; x++ {
-		if ' ' == inl[x] {
+	if '\t' == inl[4] {
+		lhs = inl[0:4]
+		rhs = inl[5:]
 
-			lhs = inl[0:x]
+		this.description = rewrite(rhs)
 
-			this.description = rewrite(inl[x+1:])
-			{
-				switch len(lhs) {
-				case 4:
-					f = string(lhs[2:4])
-					n, e = strconv.ParseUint(f,16,8)
-					if nil != e {
-						this.first = 0xFF
-						this.last = 0xFF
-					} else {
-						this.first = uint8(n)
-						this.last = uint8(n)
-					}
-					
-				case 10:
-					f = string(lhs[2:4])
-					l = string(lhs[8:])
-					n, e = strconv.ParseUint(f,16,8)
-					if nil != e {
-						this.first = 0xFF
-					} else {
-						this.first = uint8(n)
+		var f string = string(lhs[2:4])
 
-						m, e = strconv.ParseUint(l,16,8)
-						if nil != e {
-							this.last = 0xFF
-						} else {
-							this.last = uint8(m)
-						}
-					}
-				}
+		n, e = strconv.ParseUint(f,16,8)
+		if nil == e {
+
+			this.first = uint8(n)
+			this.last = this.first
+		}
+
+	} else if '\t' == inl[9] {
+		lhs = inl[0:9]
+		rhs = inl[10:]
+
+		this.description = rewrite(rhs)
+
+		var f string = string(lhs[2:4])
+		var l string = string(lhs[7:])
+
+		n, e = strconv.ParseUint(f,16,8)
+		if nil == e {
+
+			this.first = uint8(n)
+
+			n, e = strconv.ParseUint(l,16,8)
+			if nil == e {
+
+				this.last = uint8(n)
 			}
-			return this
 		}
 	}
 	return this
@@ -185,7 +181,7 @@ func (this *Table) read(filename string) (e error){
 			} else if isp {
 				return fmt.Errorf("Error reading '%s'.",filename)
 			} else {
-				this.records = append(this.records,lin.ctor(inl))
+				this.records = append(this.records,lin.read(inl))
 
 				inl, isp, e = reader.ReadLine()
 			}
