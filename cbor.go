@@ -19,25 +19,23 @@ import (
 	"math/big"
 )
 /*
- */
-var Break error = errors.New("CBOR Break")
-
-var ErrorUnrecognizedTag error = errors.New("Unrecognized CBOR Tag")
-var ErrorMissingData error = errors.New("Missing CBOR Data")
-
-/*
- * Principal user interface.
- */
-type IO interface {
-
-	Write(io.Writer) (error)
-
-	Read(io.Reader) (error)
-}
-/*
- * Encoded data set.
+ * Encoded data set content object.
  */
 type Object []byte
+/*
+ * Content object user interface.  CBOR binary code is
+ * consumed and produced in these interfaces.
+ */
+type IO interface {
+	/*
+	 * The CBOR producer is replicating.
+	 */
+	Write(io.Writer) (error)
+	/*
+	 * The CBOR consumer is validating.
+	 */
+	Read(io.Reader) (error)
+}
 /*
  * Eight bits of Tag.  See Appendix B Table 7 [RFC8949].
  * See also ./doc/cbor-rfc8949-table.go
@@ -49,6 +47,7 @@ type Tag byte
  */
 type Major byte
 /*
+ * MajorBits = (0b111 << 5)
  */
 var MajorUint Major   = Major(0)
 var MajorSint Major   = Major(1)
@@ -58,6 +57,34 @@ var MajorArray Major  = Major(4)
 var MajorMap Major    = Major(5)
 var MajorTagged Major = Major(6)
 var MajorSimple Major = Major(7)
+/*
+ * A package external struct type can extend this package by
+ * implementing this interface.
+ */
+type Coder interface {
+	/*
+	 * The member type category produces a CBOR Object
+	 * may perform byte encoding by calling
+	 * "cbor.Encode" on a GOPL primitive, i.e. "map".
+	 */
+	Encode() (Object)
+	/*
+	 * The member type category consumes a CBOR binary
+	 * by calling "cbor.Decode" to yield a GOPL
+	 * primitive, i.e. "map".
+	 */
+	Decode(Object)
+}
+/*
+ * Internal CBOR Break
+ */
+var Break error = errors.New("CBOR Break")
+/*
+ * Validation errors produced by <Object#Read>.
+ */
+const ErrorWrapRead string = "CBOR Data: %w"
+var ErrorUnrecognizedTag error = errors.New("Unrecognized CBOR Tag")
+var ErrorMissingData error = errors.New("Missing CBOR Data")
 /*
  */
 func (this Object) Write(w io.Writer) (e error){
@@ -94,7 +121,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,1)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 1 != n {
 				return ErrorMissingData
 			} else {
@@ -109,7 +136,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,2)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 2 != n {
 				return ErrorMissingData
 			} else {
@@ -124,7 +151,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,4)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 4 != n {
 				return ErrorMissingData
 			} else {
@@ -139,7 +166,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,8)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 8 != n {
 				return ErrorMissingData
 			} else {
@@ -160,7 +187,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,1)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 1 != n {
 				return ErrorMissingData
 			} else {
@@ -168,7 +195,7 @@ func (this Object) Read(r io.Reader) (e error){
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf("Data: %w",e)
+					return fmt.Errorf(ErrorWrapRead,e)
 				} else if z != n {
 					return ErrorMissingData
 				} else {
@@ -185,7 +212,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,2)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 2 != n {
 				return ErrorMissingData
 			} else {
@@ -193,7 +220,7 @@ func (this Object) Read(r io.Reader) (e error){
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf("Data: %w",e)
+					return fmt.Errorf(ErrorWrapRead,e)
 				} else if z != n {
 					return ErrorMissingData
 				} else {
@@ -210,7 +237,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,4)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 4 != n {
 				return ErrorMissingData
 			} else {
@@ -218,7 +245,7 @@ func (this Object) Read(r io.Reader) (e error){
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf("Data: %w",e)
+					return fmt.Errorf(ErrorWrapRead,e)
 				} else if z != uint32(n) {
 					return ErrorMissingData
 				} else {
@@ -235,7 +262,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,8)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 8 != n {
 				return ErrorMissingData
 			} else {
@@ -243,7 +270,7 @@ func (this Object) Read(r io.Reader) (e error){
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf("Data: %w",e)
+					return fmt.Errorf(ErrorWrapRead,e)
 				} else if z != uint64(n) {
 					return ErrorMissingData
 				} else {
@@ -261,7 +288,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,m)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if m != n {
 				return ErrorMissingData
 			} else {
@@ -276,7 +303,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,1)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 1 != n {
 				return ErrorMissingData
 			} else {
@@ -284,7 +311,7 @@ func (this Object) Read(r io.Reader) (e error){
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf("Data: %w",e)
+					return fmt.Errorf(ErrorWrapRead,e)
 				} else if z != n {
 					return ErrorMissingData
 				} else {
@@ -301,7 +328,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,2)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 2 != n {
 				return ErrorMissingData
 			} else {
@@ -309,7 +336,7 @@ func (this Object) Read(r io.Reader) (e error){
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf("Data: %w",e)
+					return fmt.Errorf(ErrorWrapRead,e)
 				} else if z != n {
 					return ErrorMissingData
 				} else {
@@ -326,7 +353,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,4)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 4 != n {
 				return ErrorMissingData
 			} else {
@@ -334,7 +361,7 @@ func (this Object) Read(r io.Reader) (e error){
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf("Data: %w",e)
+					return fmt.Errorf(ErrorWrapRead,e)
 				} else if z != uint32(n) {
 					return ErrorMissingData
 				} else {
@@ -351,7 +378,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,8)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 8 != n {
 				return ErrorMissingData
 			} else {
@@ -359,7 +386,7 @@ func (this Object) Read(r io.Reader) (e error){
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf("Data: %w",e)
+					return fmt.Errorf(ErrorWrapRead,e)
 				} else if z != uint64(n) {
 					return ErrorMissingData
 				} else {
@@ -384,7 +411,7 @@ func (this Object) Read(r io.Reader) (e error){
 					e = nil
 					break
 				} else {
-					return fmt.Errorf("Data: %w",e)
+					return fmt.Errorf(ErrorWrapRead,e)
 				}
 			}
 			return nil
@@ -397,7 +424,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,m)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if m != n {
 				return ErrorMissingData
 			} else {
@@ -412,7 +439,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,1)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 1 != n {
 				return ErrorMissingData
 			} else {
@@ -421,7 +448,7 @@ func (this Object) Read(r io.Reader) (e error){
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf("Data: %w",e)
+					return fmt.Errorf(ErrorWrapRead,e)
 				} else if z != n {
 					return ErrorMissingData
 				} else {
@@ -438,7 +465,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,2)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 2 != n {
 				return ErrorMissingData
 			} else {
@@ -447,7 +474,7 @@ func (this Object) Read(r io.Reader) (e error){
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf("Data: %w",e)
+					return fmt.Errorf(ErrorWrapRead,e)
 				} else if z != n {
 					return ErrorMissingData
 				} else {
@@ -464,7 +491,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,4)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 4 != n {
 				return ErrorMissingData
 			} else {
@@ -473,7 +500,7 @@ func (this Object) Read(r io.Reader) (e error){
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf("Data: %w",e)
+					return fmt.Errorf(ErrorWrapRead,e)
 				} else if z != uint32(n) {
 					return ErrorMissingData
 				} else {
@@ -490,7 +517,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,8)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 8 != n {
 				return ErrorMissingData
 			} else {
@@ -499,7 +526,7 @@ func (this Object) Read(r io.Reader) (e error){
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf("Data: %w",e)
+					return fmt.Errorf(ErrorWrapRead,e)
 				} else if z != uint64(n) {
 					return ErrorMissingData
 				} else {
@@ -524,7 +551,7 @@ func (this Object) Read(r io.Reader) (e error){
 					e = nil
 					break
 				} else {
-					return fmt.Errorf("Data: %w",e)
+					return fmt.Errorf(ErrorWrapRead,e)
 				}
 			}
 			return nil
@@ -542,7 +569,7 @@ func (this Object) Read(r io.Reader) (e error){
 					this = concatenate(this,a)
 
 				} else {
-					return fmt.Errorf("Data: %w",e)
+					return fmt.Errorf(ErrorWrapRead,e)
 				}
 			}
 			return nil
@@ -554,7 +581,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,1)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 1 != n {
 				return ErrorMissingData
 			} else {
@@ -568,7 +595,7 @@ func (this Object) Read(r io.Reader) (e error){
 						this = concatenate(this,a)
 
 					} else {
-						return fmt.Errorf("Data: %w",e)
+						return fmt.Errorf(ErrorWrapRead,e)
 					}
 				}
 				return nil
@@ -581,7 +608,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,2)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 2 != n {
 				return ErrorMissingData
 			} else {
@@ -595,7 +622,7 @@ func (this Object) Read(r io.Reader) (e error){
 						this = concatenate(this,a)
 
 					} else {
-						return fmt.Errorf("Data: %w",e)
+						return fmt.Errorf(ErrorWrapRead,e)
 					}
 				}
 				return nil
@@ -608,7 +635,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,4)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 4 != n {
 				return ErrorMissingData
 			} else {
@@ -622,7 +649,7 @@ func (this Object) Read(r io.Reader) (e error){
 						this = concatenate(this,a)
 
 					} else {
-						return fmt.Errorf("Data: %w",e)
+						return fmt.Errorf(ErrorWrapRead,e)
 					}
 				}
 				return nil
@@ -635,7 +662,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,8)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 8 != n {
 				return ErrorMissingData
 			} else {
@@ -649,7 +676,7 @@ func (this Object) Read(r io.Reader) (e error){
 						this = concatenate(this,a)
 
 					} else {
-						return fmt.Errorf("Data: %w",e)
+						return fmt.Errorf(ErrorWrapRead,e)
 					}
 				}
 				return nil
@@ -670,7 +697,7 @@ func (this Object) Read(r io.Reader) (e error){
 					e = nil
 					break
 				} else {
-					return fmt.Errorf("Data: %w",e)
+					return fmt.Errorf(ErrorWrapRead,e)
 				}
 			}
 			return nil
@@ -684,14 +711,14 @@ func (this Object) Read(r io.Reader) (e error){
 				a = Object{}
 				e = a.Read(r)
 				if nil != e {
-					return fmt.Errorf("Data: %w",e)
+					return fmt.Errorf(ErrorWrapRead,e)
 				} else {
 					this = concatenate(this,a)
 
 					b = make([]byte,0)
 					e = b.Read(r)
 					if nil != e {
-						return fmt.Errorf("Data: %w",e)
+						return fmt.Errorf(ErrorWrapRead,e)
 					} else {
 						this = concatenate(this,b)
 					}	
@@ -706,7 +733,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,1)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 1 != n {
 				return ErrorMissingData
 			} else {
@@ -716,13 +743,13 @@ func (this Object) Read(r io.Reader) (e error){
 					a = Object{}
 					e = a.Read(r)
 					if nil != e {
-						return fmt.Errorf("Data: %w",e)
+						return fmt.Errorf(ErrorWrapRead,e)
 					} else {
 						this = concatenate(this,a)
 						b = make([]byte,0)
 						e = b.Read(r)
 						if nil != e {
-							return fmt.Errorf("Data: %w",e)
+							return fmt.Errorf(ErrorWrapRead,e)
 						} else {
 							this = concatenate(this,b)
 						}	
@@ -738,7 +765,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,2)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 2 != n {
 				return ErrorMissingData
 			} else {
@@ -748,13 +775,13 @@ func (this Object) Read(r io.Reader) (e error){
 					a = Object{}
 					e = a.Read(r)
 					if nil != e {
-						return fmt.Errorf("Data: %w",e)
+						return fmt.Errorf(ErrorWrapRead,e)
 					} else {
 						this = concatenate(this,a)
 						b = make([]byte,0)
 						e = b.Read(r)
 						if nil != e {
-							return fmt.Errorf("Data: %w",e)
+							return fmt.Errorf(ErrorWrapRead,e)
 						} else {
 							this = concatenate(this,b)
 						}	
@@ -770,7 +797,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,4)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 4 != n {
 				return ErrorMissingData
 			} else {
@@ -780,13 +807,13 @@ func (this Object) Read(r io.Reader) (e error){
 					a = Object{}
 					e = a.Read(r)
 					if nil != e {
-						return fmt.Errorf("Data: %w",e)
+						return fmt.Errorf(ErrorWrapRead,e)
 					} else {
 						this = concatenate(this,a)
 						b = make([]byte,0)
 						e = b.Read(r)
 						if nil != e {
-							return fmt.Errorf("Data: %w",e)
+							return fmt.Errorf(ErrorWrapRead,e)
 						} else {
 							this = concatenate(this,b)
 						}	
@@ -802,7 +829,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,8)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 8 != n {
 				return ErrorMissingData
 			} else {
@@ -812,13 +839,13 @@ func (this Object) Read(r io.Reader) (e error){
 					a = Object{}
 					e = a.Read(r)
 					if nil != e {
-						return fmt.Errorf("Data: %w",e)
+						return fmt.Errorf(ErrorWrapRead,e)
 					} else {
 						this = concatenate(this,a)
 						b = make([]byte,0)
 						e = b.Read(r)
 						if nil != e {
-							return fmt.Errorf("Data: %w",e)
+							return fmt.Errorf(ErrorWrapRead,e)
 						} else {
 							this = concatenate(this,b)
 						}	
@@ -844,13 +871,13 @@ func (this Object) Read(r io.Reader) (e error){
 						this = concatenate(this,b)
 
 					} else {
-						return fmt.Errorf("Data: %w",e)
+						return fmt.Errorf(ErrorWrapRead,e)
 					}
 				} else if Break == e {
 					e = nil
 					break
 				} else {
-					return fmt.Errorf("Data: %w",e)
+					return fmt.Errorf(ErrorWrapRead,e)
 				}
 			}
 			return nil
@@ -865,7 +892,7 @@ func (this Object) Read(r io.Reader) (e error){
 				this = concatenate(this,a)
 				return nil
 			} else {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			}
 
 		case 0xC2:
@@ -878,7 +905,7 @@ func (this Object) Read(r io.Reader) (e error){
 				this = concatenate(this,a)
 				return nil
 			} else {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			}
 
 		case 0xC3:
@@ -891,7 +918,7 @@ func (this Object) Read(r io.Reader) (e error){
 				this = concatenate(this,a)
 				return nil
 			} else {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			}
 
 		case 0xC4:
@@ -904,7 +931,7 @@ func (this Object) Read(r io.Reader) (e error){
 				this = concatenate(this,a)
 				return nil
 			} else {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			}
 
 		case 0xC5:
@@ -917,7 +944,7 @@ func (this Object) Read(r io.Reader) (e error){
 				this = concatenate(this,a)
 				return nil
 			} else {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			}
 
 		case 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4:
@@ -936,7 +963,7 @@ func (this Object) Read(r io.Reader) (e error){
 				this = concatenate(this,a)
 				return nil
 			} else {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			}
 
 		case 0xD8:
@@ -946,7 +973,7 @@ func (this Object) Read(r io.Reader) (e error){
 			a = make([]byte,1)
 			n, e = r.Read(a)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 1 != n {
 				return fmt.Errorf("Data expected (1) found (%d).",n)
 			} else {
@@ -959,7 +986,7 @@ func (this Object) Read(r io.Reader) (e error){
 
 					return nil
 				} else {
-					return fmt.Errorf("Data: %w",e)
+					return fmt.Errorf(ErrorWrapRead,e)
 				}
 			}
 
@@ -970,7 +997,7 @@ func (this Object) Read(r io.Reader) (e error){
 			a = make([]byte,2)
 			n, e = r.Read(a)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 2 != n {
 				return fmt.Errorf("Data expected (2) found (%d).",n)
 			} else {
@@ -983,7 +1010,7 @@ func (this Object) Read(r io.Reader) (e error){
 
 					return nil
 				} else {
-					return fmt.Errorf("Data: %w",e)
+					return fmt.Errorf(ErrorWrapRead,e)
 				}
 			}
 
@@ -994,7 +1021,7 @@ func (this Object) Read(r io.Reader) (e error){
 			a = make([]byte,4)
 			n, e = r.Read(a)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 4 != n {
 				return fmt.Errorf("Data expected (4) found (%d).",n)
 			} else {
@@ -1007,7 +1034,7 @@ func (this Object) Read(r io.Reader) (e error){
 
 					return nil
 				} else {
-					return fmt.Errorf("Data: %w",e)
+					return fmt.Errorf(ErrorWrapRead,e)
 				}
 			}
 
@@ -1018,7 +1045,7 @@ func (this Object) Read(r io.Reader) (e error){
 			a = make([]byte,8)
 			n, e = r.Read(a)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 8 != n {
 				return fmt.Errorf("Data expected (8) found (%d).",n)
 			} else {
@@ -1031,7 +1058,7 @@ func (this Object) Read(r io.Reader) (e error){
 
 					return nil
 				} else {
-					return fmt.Errorf("Data: %w",e)
+					return fmt.Errorf(ErrorWrapRead,e)
 				}
 			}
 
@@ -1072,7 +1099,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,1)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 1 != n {
 				return ErrorMissingData
 			} else {
@@ -1087,7 +1114,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,2)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 2 != n {
 				return ErrorMissingData
 			} else {
@@ -1102,7 +1129,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,4)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 4 != n {
 				return ErrorMissingData
 			} else {
@@ -1117,7 +1144,7 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,8)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf("Data: %w",e)
+				return fmt.Errorf(ErrorWrapRead,e)
 			} else if 8 != n {
 				return ErrorMissingData
 			} else {
@@ -1465,7 +1492,6 @@ func (this Object) Refine(size uint64) (Object) {
 	}
 	return this
 }
-
 /*
  * Define object content.
  */
@@ -1536,9 +1562,9 @@ func Encode(a any) (this Object) {
 			this = concatenate(this,[]byte(vo))
 		}
 
-	case map[any]any:
+	case map[string]any:
 		this = Define(MajorMap)
-		var mmm map[any]any = a.(map[any]any)
+		var mmm map[string]any = a.(map[string]any)
 		var mmz uint64 = uint64(len(mmm))
 		this = this.Refine(mmz)
 		for k, v := range mmm {
@@ -1548,13 +1574,17 @@ func Encode(a any) (this Object) {
 			var vo Object = Encode(v)
 			this = concatenate(this,[]byte(vo))
 		}
+
+	case Coder:
+		var coder Coder = a.(Coder)
+		this = coder.Encode()
 	}
 	return this
 }
 /*
  * Resolve object content.
  */
-func (this Object) Decode() (a any){
+func (this Object) Decode() (a any) {
 	if this.HasTag() {
 		var tag Tag = this.Tag()
 		switch tag {
