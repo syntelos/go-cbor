@@ -1738,8 +1738,11 @@ func (this Object) Decode() (a any) {
 				if nil != e {
 					break
 				} else {
-					var src []byte = o.Decode().([]byte)
-					bary.Concatenate(src)
+					a = o.Decode()
+					if nil != a {
+						var src []byte = a.([]byte)
+						bary.Concatenate(src)
+					}
 				}
 			}
 			return bary
@@ -1776,8 +1779,11 @@ func (this Object) Decode() (a any) {
 				if nil != e {
 					break
 				} else {
-					var src []byte = o.Decode().([]byte)
-					bary.Concatenate(src)
+					a = o.Decode()
+					if nil != a {
+						var src []byte = a.([]byte)
+						bary.Concatenate(src)
+					}
 				}
 			}
 			return string(bary)
@@ -1873,7 +1879,7 @@ func (this Object) Decode() (a any) {
 			return a
 		case 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7:
 			var m, n int = int(tag-0xA0), 0
-			var a map[any]any = make(map[any]any,m)
+			var o map[string]any = make(map[string]any,m)
 			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
 			var e error
 			for n = 0; n < m; n++ {
@@ -1882,21 +1888,23 @@ func (this Object) Decode() (a any) {
 				if nil != e {
 					break
 				} else {
-					var k any = ko.Decode()
-					var vo Object = Object{}
-					vo, e = vo.Read(b)
-					if nil != e {
-						break
-					} else {
-						var v any = vo.Decode()
-						a[k] = v
+					a = ko.Decode()
+					if nil != a {
+						var k string = a.(string)
+						var vo Object = Object{}
+						vo, e = vo.Read(b)
+						if nil != e {
+							break
+						} else {
+							o[k] = vo.Decode()
+						}
 					}
 				}
 			}
-			return a
+			return o
 		case 0xB8:
 			var m, n uint8 = uint8(this[1]), 0
-			var a map[any]any = make(map[any]any,m)
+			var o map[string]any = make(map[string]any,m)
 			var b *bytes.Buffer = bytes.NewBuffer(this[2:])
 			var e error
 			for n = 0; n < m; n++ {
@@ -1905,21 +1913,23 @@ func (this Object) Decode() (a any) {
 				if nil != e {
 					break
 				} else {
-					var k any = ko.Decode()
-					var vo Object = Object{}
-					vo, e = vo.Read(b)
-					if nil != e {
-						break
-					} else {
-						var v any = vo.Decode()
-						a[k] = v
+					a = ko.Decode()
+					if nil != a {
+						var k string = a.(string)
+						var vo Object = Object{}
+						vo, e = vo.Read(b)
+						if nil != e {
+							break
+						} else {
+							o[k] = vo.Decode()
+						}
 					}
 				}
 			}
-			return a
+			return o
 		case 0xB9:
 			var m, n uint16 = endian.BigEndian.DecodeUint16(this[1:2]), 0
-			var a map[any]any = make(map[any]any,m)
+			var o map[string]any = make(map[string]any,m)
 			var b *bytes.Buffer = bytes.NewBuffer(this[3:])
 			var e error
 			for n = 0; n < m; n++ {
@@ -1928,21 +1938,23 @@ func (this Object) Decode() (a any) {
 				if nil != e {
 					break
 				} else {
-					var k any = ko.Decode()
-					var vo Object = Object{}
-					vo, e = vo.Read(b)
-					if nil != e {
-						break
-					} else {
-						var v any = vo.Decode()
-						a[k] = v
+					a = ko.Decode()
+					if nil != a {
+						var k string = a.(string)
+						var vo Object = Object{}
+						vo, e = vo.Read(b)
+						if nil != e {
+							break
+						} else {
+							o[k] = vo.Decode()
+						}
 					}
 				}
 			}
-			return a
+			return o
 		case 0xBA:
 			var m, n uint32 = endian.BigEndian.DecodeUint32(this[1:4]), 0
-			var a map[any]any = make(map[any]any,m)
+			var o map[string]any = make(map[string]any,m)
 			var b *bytes.Buffer = bytes.NewBuffer(this[5:])
 			var e error
 			for n = 0; n < m; n++ {
@@ -1951,21 +1963,23 @@ func (this Object) Decode() (a any) {
 				if nil != e {
 					break
 				} else {
-					var k any = ko.Decode()
-					var vo Object = Object{}
-					vo, e = vo.Read(b)
-					if nil != e {
-						break
-					} else {
-						var v any = vo.Decode()
-						a[k] = v
+					a = ko.Decode()
+					if nil != a {
+						var k string = a.(string)
+						var vo Object = Object{}
+						vo, e = vo.Read(b)
+						if nil != e {
+							break
+						} else {
+							o[k] = vo.Decode()
+						}
 					}
 				}
 			}
-			return a
+			return o
 		case 0xBB:
 			var m, n uint64 = endian.BigEndian.DecodeUint64(this[1:8]), 0
-			var a map[any]any = make(map[any]any,m)
+			var o map[string]any = make(map[string]any,m)
 			var b *bytes.Buffer = bytes.NewBuffer(this[9:])
 			var e error
 			for n = 0; n < m; n++ {
@@ -1974,20 +1988,22 @@ func (this Object) Decode() (a any) {
 				if nil != e {
 					break
 				} else {
-					var k any = ko.Decode()
-					var vo Object = Object{}
-					vo, e = vo.Read(b)
-					if nil != e {
-						break
-					} else {
-						var v any = vo.Decode()
-						a[k] = v
+					a = ko.Decode()
+					if nil != a {
+						var k string = a.(string)
+						var vo Object = Object{}
+						vo, e = vo.Read(b)
+						if nil != e {
+							break
+						} else {
+							o[k] = vo.Decode()
+						}
 					}
 				}
 			}
-			return a
+			return o
 		case 0xBF:
-			var a map[any]any = make(map[any]any,1)
+			var o map[string]any = make(map[string]any,1)
 			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
 			var e error = nil
 			for nil == e {
@@ -1996,18 +2012,20 @@ func (this Object) Decode() (a any) {
 				if nil != e {
 					break
 				} else {
-					var k any = ko.Decode()
-					var vo Object = Object{}
-					vo, e = vo.Read(b)
-					if nil != e {
-						break
-					} else {
-						var v any = vo.Decode()
-						a[k] = v
+					a = ko.Decode()
+					if nil != a {
+						var k string = a.(string)
+						var vo Object = Object{}
+						vo, e = vo.Read(b)
+						if nil != e {
+							break
+						} else {
+							o[k] = vo.Decode()
+						}
 					}
 				}
 			}
-			return a
+			return o
 		case 0xC0, 0xC1:
 			var a Object = Object{}
 			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
