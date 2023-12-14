@@ -34,7 +34,7 @@ type IO interface {
 	/*
 	 * The CBOR consumer is validating.
 	 */
-	Read(io.Reader) (error)
+	Read(io.Reader) (Object, error)
 }
 /*
  * Eight bits of Tag.  See Appendix B Table 7 [RFC8949].
@@ -73,7 +73,7 @@ type Coder interface {
 	 * by calling "cbor.Decode" to yield a GOPL
 	 * primitive, i.e. "map".
 	 */
-	Decode(Object)
+	Decode(Object) (any)
 }
 /*
  * Internal CBOR Break
@@ -93,15 +93,16 @@ func (this Object) Write(w io.Writer) (e error){
 }
 /*
  */
-func (this Object) Read(r io.Reader) (e error){
+func (this Object) Read(r io.Reader) (Object, error){
 	var tag []byte = make([]byte,1)
 	var m, n int
+	var e error
 
 	n, e = r.Read(tag)
 	if nil != e {
-		return e
+		return nil, e
 	} else if 1 != n {
-		return fmt.Errorf("Read (%d) expected (1).",n)
+		return nil, fmt.Errorf("Read (%d) expected (1).",n)
 	} else {
 		var d []byte
 		var t byte = tag[0]
@@ -112,7 +113,7 @@ func (this Object) Read(r io.Reader) (e error){
 			/* unsigned integer 0x00..0x17 (0..23)
 			 */
 			this = tag
-			return nil
+			return this, nil
 
 		case 0x18:
 			/* unsigned integer (one-byte uint8_t follows)
@@ -121,12 +122,12 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,1)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 1 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
-				this = concatenate(this,d)
-				return nil
+				this = this.Concatenate(d)
+				return this, nil
 			}
 
 		case 0x19:
@@ -136,12 +137,12 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,2)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 2 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
-				this = concatenate(this,d)
-				return nil
+				this = this.Concatenate(d)
+				return this, nil
 			}
 
 		case 0x1A:
@@ -151,12 +152,12 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,4)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 4 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
-				this = concatenate(this,d)
-				return nil
+				this = this.Concatenate(d)
+				return this, nil
 			}
 
 		case 0x1B:
@@ -166,19 +167,19 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,8)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 8 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
-				this = concatenate(this,d)
-				return nil
+				this = this.Concatenate(d)
+				return this, nil
 			}
 
 		case 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37:
 			/* negative integer -1-0x00..-1-0x17 (-1..-24)
 			 */
 			this = tag
-			return nil
+			return this, nil
 
 		case 0x38:
 			/* negative integer -1-n (one-byte uint8_t for n follows)
@@ -187,21 +188,21 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,1)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 1 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
+				this = this.Concatenate(d)
 				var z int = int(d[0])
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf(ErrorWrapRead,e)
+					return nil, fmt.Errorf(ErrorWrapRead,e)
 				} else if z != n {
-					return ErrorMissingData
+					return nil, ErrorMissingData
 				} else {
-					d = concatenate(d,p)
-					this = concatenate(this,d)
-					return nil
+					this = this.Concatenate(p)
+					return this, nil
 				}	
 			}
 
@@ -212,21 +213,21 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,2)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 2 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
+				this = this.Concatenate(d)
 				var z int = int(endian.BigEndian.DecodeUint16(d))
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf(ErrorWrapRead,e)
+					return nil, fmt.Errorf(ErrorWrapRead,e)
 				} else if z != n {
-					return ErrorMissingData
+					return nil, ErrorMissingData
 				} else {
-					d = concatenate(d,p)
-					this = concatenate(this,d)
-					return nil
+					this = this.Concatenate(p)
+					return this, nil
 				}	
 			}
 
@@ -237,21 +238,21 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,4)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 4 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
+				this = this.Concatenate(d)
 				var z uint32 = endian.BigEndian.DecodeUint32(d)
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf(ErrorWrapRead,e)
+					return nil, fmt.Errorf(ErrorWrapRead,e)
 				} else if z != uint32(n) {
-					return ErrorMissingData
+					return nil, ErrorMissingData
 				} else {
-					d = concatenate(d,p)
-					this = concatenate(this,d)
-					return nil
+					this = this.Concatenate(p)
+					return this, nil
 				}	
 			}
 
@@ -262,21 +263,21 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,8)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 8 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
+				this = this.Concatenate(d)
 				var z uint64 = endian.BigEndian.DecodeUint64(d)
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf(ErrorWrapRead,e)
+					return nil, fmt.Errorf(ErrorWrapRead,e)
 				} else if z != uint64(n) {
-					return ErrorMissingData
+					return nil, ErrorMissingData
 				} else {
-					d = concatenate(d,p)
-					this = concatenate(this,d)
-					return nil
+					this = this.Concatenate(p)
+					return this, nil
 				}	
 			}
 
@@ -288,12 +289,12 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,m)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if m != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
-				this = concatenate(this,d)
-				return nil
+				this = this.Concatenate(d)
+				return this, nil
 			}
 
 		case 0x58:
@@ -303,21 +304,21 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,1)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 1 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
+				this = this.Concatenate(d)
 				var z int = int(d[0])
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf(ErrorWrapRead,e)
+					return nil, fmt.Errorf(ErrorWrapRead,e)
 				} else if z != n {
-					return ErrorMissingData
+					return nil, ErrorMissingData
 				} else {
-					d = concatenate(d,p)
-					this = concatenate(this,d)
-					return nil
+					this = this.Concatenate(p)
+					return this, nil
 				}	
 			}
 
@@ -328,21 +329,21 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,2)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 2 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
+				this = this.Concatenate(d)
 				var z int = int(endian.BigEndian.DecodeUint16(d))
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf(ErrorWrapRead,e)
+					return nil, fmt.Errorf(ErrorWrapRead,e)
 				} else if z != n {
-					return ErrorMissingData
+					return nil, ErrorMissingData
 				} else {
-					d = concatenate(d,p)
-					this = concatenate(this,d)
-					return nil
+					this = this.Concatenate(p)
+					return this, nil
 				}	
 			}
 
@@ -353,21 +354,21 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,4)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 4 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
+				this = this.Concatenate(d)
 				var z uint32 = endian.BigEndian.DecodeUint32(d)
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf(ErrorWrapRead,e)
+					return nil, fmt.Errorf(ErrorWrapRead,e)
 				} else if z != uint32(n) {
-					return ErrorMissingData
+					return nil, ErrorMissingData
 				} else {
-					d = concatenate(d,p)
-					this = concatenate(this,d)
-					return nil
+					this = this.Concatenate(p)
+					return this, nil
 				}	
 			}
 
@@ -378,21 +379,21 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,8)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 8 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
+				this = this.Concatenate(d)
 				var z uint64 = endian.BigEndian.DecodeUint64(d)
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf(ErrorWrapRead,e)
+					return nil, fmt.Errorf(ErrorWrapRead,e)
 				} else if z != uint64(n) {
-					return ErrorMissingData
+					return nil, ErrorMissingData
 				} else {
-					d = concatenate(d,p)
-					this = concatenate(this,d)
-					return nil
+					this = this.Concatenate(p)
+					return this, nil
 				}	
 			}
 
@@ -402,19 +403,17 @@ func (this Object) Read(r io.Reader) (e error){
 			this = tag
 			for nil == e {
 				a = Object{}
-				e = a.Read(r)
+				a, e = a.Read(r)
 				if nil == e {
-
-					this = concatenate(this,a)
-
+					this = this.Concatenate(a)
 				} else if Break == e {
 					e = nil
 					break
 				} else {
-					return fmt.Errorf(ErrorWrapRead,e)
+					return nil, fmt.Errorf(ErrorWrapRead,e)
 				}
 			}
-			return nil
+			return this, nil
 
 		case 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77:
 			/* UTF-8 string (0x00..0x17 bytes follow)
@@ -424,12 +423,12 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,m)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if m != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
-				this = concatenate(this,d)
-				return nil
+				this = this.Concatenate(d)
+				return this, nil
 			}
 
 		case 0x78:
@@ -439,22 +438,21 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,1)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 1 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
-				this = concatenate(this,d)
+				this = this.Concatenate(d)
 				var z int = int(d[0])
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf(ErrorWrapRead,e)
+					return nil, fmt.Errorf(ErrorWrapRead,e)
 				} else if z != n {
-					return ErrorMissingData
+					return nil, ErrorMissingData
 				} else {
-					d = concatenate(d,p)
-					this = concatenate(this,d)
-					return nil
+					this = this.Concatenate(p)
+					return this, nil
 				}	
 			}
 
@@ -465,22 +463,21 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,2)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 2 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
-				this = concatenate(this,d)
+				this = this.Concatenate(d)
 				var z int = int(endian.BigEndian.DecodeUint16(d))
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf(ErrorWrapRead,e)
+					return nil, fmt.Errorf(ErrorWrapRead,e)
 				} else if z != n {
-					return ErrorMissingData
+					return nil, ErrorMissingData
 				} else {
-					d = concatenate(d,p)
-					this = concatenate(this,d)
-					return nil
+					this = this.Concatenate(p)
+					return this, nil
 				}	
 			}
 
@@ -491,22 +488,21 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,4)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 4 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
-				this = concatenate(this,d)
+				this = this.Concatenate(d)
 				var z uint32 = endian.BigEndian.DecodeUint32(d)
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf(ErrorWrapRead,e)
+					return nil, fmt.Errorf(ErrorWrapRead,e)
 				} else if z != uint32(n) {
-					return ErrorMissingData
+					return nil, ErrorMissingData
 				} else {
-					d = concatenate(d,p)
-					this = concatenate(this,d)
-					return nil
+					this = this.Concatenate(d)
+					return this, nil
 				}
 			}
 
@@ -517,22 +513,21 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,8)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 8 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
-				this = concatenate(this,d)
+				this = this.Concatenate(d)
 				var z uint64 = endian.BigEndian.DecodeUint64(d)
 				var p []byte = make([]byte,z)
 				n, e = r.Read(p)
 				if nil != e {
-					return fmt.Errorf(ErrorWrapRead,e)
+					return nil, fmt.Errorf(ErrorWrapRead,e)
 				} else if z != uint64(n) {
-					return ErrorMissingData
+					return nil, ErrorMissingData
 				} else {
-					d = concatenate(d,p)
-					this = concatenate(this,d)
-					return nil
+					this = this.Concatenate(d)
+					return this, nil
 				}	
 			}
 
@@ -542,19 +537,17 @@ func (this Object) Read(r io.Reader) (e error){
 			this = tag
 			for nil == e {
 				a = Object{}
-				e = a.Read(r)
+				a, e = a.Read(r)
 				if nil == e {
-
-					this = concatenate(this,a)
-
+					this = this.Concatenate(a)
 				} else if Break == e {
 					e = nil
 					break
 				} else {
-					return fmt.Errorf(ErrorWrapRead,e)
+					return nil, fmt.Errorf(ErrorWrapRead,e)
 				}
 			}
-			return nil
+			return this, nil
 
 		case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F, 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97:
 			/* array (0x00..0x17 data items follow)
@@ -563,16 +556,14 @@ func (this Object) Read(r io.Reader) (e error){
 			m = int(t-0x80)
 			for n = 0; n < m; n++ {
 				a = Object{}
-				e = a.Read(r)
+				a, e = a.Read(r)
 				if nil == e {
-
-					this = concatenate(this,a)
-
+					this = this.Concatenate(a)
 				} else {
-					return fmt.Errorf(ErrorWrapRead,e)
+					return nil, fmt.Errorf(ErrorWrapRead,e)
 				}
 			}
-			return nil
+			return this, nil
 
 		case 0x98:
 			/* array (one-byte uint8_t for n, and then n data items follow)
@@ -581,24 +572,22 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,1)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 1 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
-				this = concatenate(this,d)
+				this = this.Concatenate(d)
 				var z int = int(d[0])
 				for n = 0; n < z; n++ {
 					a = Object{}
-					e = a.Read(r)
+					a, e = a.Read(r)
 					if nil == e {
-
-						this = concatenate(this,a)
-
+						this = this.Concatenate(a)
 					} else {
-						return fmt.Errorf(ErrorWrapRead,e)
+						return nil, fmt.Errorf(ErrorWrapRead,e)
 					}
 				}
-				return nil
+				return this, nil
 			}
 
 		case 0x99:
@@ -608,24 +597,22 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,2)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 2 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
-				this = concatenate(this,d)
+				this = this.Concatenate(d)
 				var x, z uint16 = 0, endian.BigEndian.DecodeUint16(d)
 				for ; x < z; x++ {
 					a = Object{}
-					e = a.Read(r)
+					a, e = a.Read(r)
 					if nil == e {
-
-						this = concatenate(this,a)
-
+						this = this.Concatenate(a)
 					} else {
-						return fmt.Errorf(ErrorWrapRead,e)
+						return nil, fmt.Errorf(ErrorWrapRead,e)
 					}
 				}
-				return nil
+				return this, nil
 			}
 
 		case 0x9A:
@@ -635,24 +622,22 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,4)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 4 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
-				this = concatenate(this,d)
+				this = this.Concatenate(d)
 				var x, z uint32 = 0, endian.BigEndian.DecodeUint32(d)
 				for ; x < z; x++ {
 					a = Object{}
-					e = a.Read(r)
+					a, e = a.Read(r)
 					if nil == e {
-
-						this = concatenate(this,a)
-
+						this = this.Concatenate(a)
 					} else {
-						return fmt.Errorf(ErrorWrapRead,e)
+						return nil, fmt.Errorf(ErrorWrapRead,e)
 					}
 				}
-				return nil
+				return this, nil
 			}
 
 		case 0x9B:
@@ -662,24 +647,22 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,8)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 8 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
-				this = concatenate(this,d)
+				this = this.Concatenate(d)
 				var x, z uint64 = 0, endian.BigEndian.DecodeUint64(d)
 				for ; x < z; x++ {
 					a = Object{}
-					e = a.Read(r)
+					a, e = a.Read(r)
 					if nil == e {
-
-						this = concatenate(this,a)
-
+						this = this.Concatenate(a)
 					} else {
-						return fmt.Errorf(ErrorWrapRead,e)
+						return nil, fmt.Errorf(ErrorWrapRead,e)
 					}
 				}
-				return nil
+				return this, nil
 			}
 
 		case 0x9F:
@@ -688,19 +671,17 @@ func (this Object) Read(r io.Reader) (e error){
 			this = tag
 			for nil == e {
 				a = Object{}
-				e = a.Read(r)
+				a, e = a.Read(r)
 				if nil == e {
-
-					this = concatenate(this,a)
-
+					this = this.Concatenate(a)
 				} else if Break == e {
 					e = nil
 					break
 				} else {
-					return fmt.Errorf(ErrorWrapRead,e)
+					return nil, fmt.Errorf(ErrorWrapRead,e)
 				}
 			}
-			return nil
+			return this, nil
 
 		case 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7:
 			/* map (0x00..0x17 pairs of data items follow)
@@ -709,22 +690,21 @@ func (this Object) Read(r io.Reader) (e error){
 			m, n = 0, int(t-0xA0)
 			for ; m < n; m++ {
 				a = Object{}
-				e = a.Read(r)
+				a, e = a.Read(r)
 				if nil != e {
-					return fmt.Errorf(ErrorWrapRead,e)
+					return nil, fmt.Errorf(ErrorWrapRead,e)
 				} else {
-					this = concatenate(this,a)
-
+					this = this.Concatenate(a)
 					b = make([]byte,0)
-					e = b.Read(r)
+					b, e = b.Read(r)
 					if nil != e {
-						return fmt.Errorf(ErrorWrapRead,e)
+						return nil, fmt.Errorf(ErrorWrapRead,e)
 					} else {
-						this = concatenate(this,b)
+						this = this.Concatenate(b)
 					}	
 				}
 			}
-			return nil
+			return this, nil
 
 		case 0xB8:
 			/* map (one-byte uint8_t for n, and then n pairs of data items follow)
@@ -733,29 +713,29 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,1)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 1 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
-				this = concatenate(this,d)
+				this = this.Concatenate(d)
 				var x, z uint8 = 0, uint8(d[0])
 				for x = 0; x < z; x++ {
 					a = Object{}
-					e = a.Read(r)
+					a, e = a.Read(r)
 					if nil != e {
-						return fmt.Errorf(ErrorWrapRead,e)
+						return nil, fmt.Errorf(ErrorWrapRead,e)
 					} else {
-						this = concatenate(this,a)
+						this = this.Concatenate(a)
 						b = make([]byte,0)
-						e = b.Read(r)
+						b, e = b.Read(r)
 						if nil != e {
-							return fmt.Errorf(ErrorWrapRead,e)
+							return nil, fmt.Errorf(ErrorWrapRead,e)
 						} else {
-							this = concatenate(this,b)
+							this = this.Concatenate(b)
 						}	
 					}
 				}
-				return nil
+				return this, nil
 			}
 
 		case 0xB9:
@@ -765,29 +745,29 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,2)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 2 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
-				this = concatenate(this,d)
+				this = this.Concatenate(d)
 				var x, z uint16 = 0, endian.BigEndian.DecodeUint16(d)
 				for x = 0; x < z; x++ {
 					a = Object{}
-					e = a.Read(r)
+					a, e = a.Read(r)
 					if nil != e {
-						return fmt.Errorf(ErrorWrapRead,e)
+						return nil, fmt.Errorf(ErrorWrapRead,e)
 					} else {
-						this = concatenate(this,a)
+						this = this.Concatenate(a)
 						b = make([]byte,0)
-						e = b.Read(r)
+						b, e = b.Read(r)
 						if nil != e {
-							return fmt.Errorf(ErrorWrapRead,e)
+							return nil, fmt.Errorf(ErrorWrapRead,e)
 						} else {
-							this = concatenate(this,b)
+							this = this.Concatenate(b)
 						}	
 					}
 				}
-				return nil
+				return this, nil
 			}
 
 		case 0xBA:
@@ -797,29 +777,29 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,4)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 4 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
-				this = concatenate(this,d)
+				this = this.Concatenate(d)
 				var x, z uint32 = 0, endian.BigEndian.DecodeUint32(d)
 				for x = 0; x < z; x++ {
 					a = Object{}
-					e = a.Read(r)
+					a, e = a.Read(r)
 					if nil != e {
-						return fmt.Errorf(ErrorWrapRead,e)
+						return nil, fmt.Errorf(ErrorWrapRead,e)
 					} else {
-						this = concatenate(this,a)
+						this = this.Concatenate(a)
 						b = make([]byte,0)
-						e = b.Read(r)
+						b, e = b.Read(r)
 						if nil != e {
-							return fmt.Errorf(ErrorWrapRead,e)
+							return nil, fmt.Errorf(ErrorWrapRead,e)
 						} else {
-							this = concatenate(this,b)
+							this = this.Concatenate(b)
 						}	
 					}
 				}
-				return nil
+				return this, nil
 			}
 
 		case 0xBB:
@@ -829,29 +809,29 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,8)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 8 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
-				this = concatenate(this,d)
+				this = this.Concatenate(d)
 				var x, z uint64 = 0, endian.BigEndian.DecodeUint64(d)
 				for x = 0; x < z; x++ {
 					a = Object{}
-					e = a.Read(r)
+					a, e = a.Read(r)
 					if nil != e {
-						return fmt.Errorf(ErrorWrapRead,e)
+						return nil, fmt.Errorf(ErrorWrapRead,e)
 					} else {
-						this = concatenate(this,a)
+						this = this.Concatenate(a)
 						b = make([]byte,0)
-						e = b.Read(r)
+						b, e = b.Read(r)
 						if nil != e {
-							return fmt.Errorf(ErrorWrapRead,e)
+							return nil, fmt.Errorf(ErrorWrapRead,e)
 						} else {
-							this = concatenate(this,b)
+							this = this.Concatenate(b)
 						}	
 					}
 				}
-				return nil
+				return this, nil
 			}
 
 		case 0xBF:
@@ -861,38 +841,37 @@ func (this Object) Read(r io.Reader) (e error){
 
 			for nil == e {
 				a = Object{}
-				e = a.Read(r)
+				a, e = a.Read(r)
 				if nil == e {
-					this = concatenate(this,a)
+					this = this.Concatenate(a)
 
 					b = make([]byte,0)
-					e = b.Read(r)
+					b, e = b.Read(r)
 					if nil == e {
-						this = concatenate(this,b)
-
+						this = this.Concatenate(b)
 					} else {
-						return fmt.Errorf(ErrorWrapRead,e)
+						return nil, fmt.Errorf(ErrorWrapRead,e)
 					}
 				} else if Break == e {
 					e = nil
 					break
 				} else {
-					return fmt.Errorf(ErrorWrapRead,e)
+					return nil, fmt.Errorf(ErrorWrapRead,e)
 				}
 			}
-			return nil
+			return this, nil
 
 		case 0xC0, 0xC1:
 			/* date/time (data item follows; see Section 3.4.1 and 3.4.2)
 			 */
 			this = tag
 			a = Object{}
-			e = a.Read(r)
+			a, e = a.Read(r)
 			if nil == e {
-				this = concatenate(this,a)
-				return nil
+				this = this.Concatenate(a)
+				return this, nil
 			} else {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			}
 
 		case 0xC2:
@@ -900,12 +879,12 @@ func (this Object) Read(r io.Reader) (e error){
 			 */
 			this = tag
 			a = Object{}
-			e = a.Read(r)
+			a, e = a.Read(r)
 			if nil == e {
-				this = concatenate(this,a)
-				return nil
+				this = this.Concatenate(a)
+				return this, nil
 			} else {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			}
 
 		case 0xC3:
@@ -913,12 +892,12 @@ func (this Object) Read(r io.Reader) (e error){
 			 */
 			this = tag
 			a = Object{}
-			e = a.Read(r)
+			a, e = a.Read(r)
 			if nil == e {
-				this = concatenate(this,a)
-				return nil
+				this = this.Concatenate(a)
+				return this, nil
 			} else {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			}
 
 		case 0xC4:
@@ -926,12 +905,12 @@ func (this Object) Read(r io.Reader) (e error){
 			 */
 			this = tag
 			a = Object{}
-			e = a.Read(r)
+			a, e = a.Read(r)
 			if nil == e {
-				this = concatenate(this,a)
-				return nil
+				this = this.Concatenate(a)
+				return this, nil
 			} else {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			}
 
 		case 0xC5:
@@ -939,31 +918,31 @@ func (this Object) Read(r io.Reader) (e error){
 			 */
 			this = tag
 			a = Object{}
-			e = a.Read(r)
+			a, e = a.Read(r)
 			if nil == e {
-				this = concatenate(this,a)
-				return nil
+				this = this.Concatenate(a)
+				return this, nil
 			} else {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			}
 
 		case 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4:
 			/* (tag)
 			 */
 			this = tag
-			return nil
+			return this, nil
 
 		case 0xD5, 0xD6, 0xD7:
 			/* expected conversion (data item follows; see Section 3.4.5.2)
 			 */
 			this = tag
 			a = Object{}
-			e = a.Read(r)
+			a, e = a.Read(r)
 			if nil == e {
-				this = concatenate(this,a)
-				return nil
+				this = this.Concatenate(a)
+				return this, nil
 			} else {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			}
 
 		case 0xD8:
@@ -973,20 +952,18 @@ func (this Object) Read(r io.Reader) (e error){
 			a = make([]byte,1)
 			n, e = r.Read(a)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 1 != n {
-				return fmt.Errorf("Data expected (1) found (%d).",n)
+				return nil, fmt.Errorf("Data expected (1) found (%d).",n)
 			} else {
-				this = concatenate(this,a)
-
+				this = this.Concatenate(a)
 				b = make([]byte,0)
-				e = b.Read(r)
+				b, e = b.Read(r)
 				if nil == e {
-					this = concatenate(this,b)
-
-					return nil
+					this = this.Concatenate(b)
+					return this, nil
 				} else {
-					return fmt.Errorf(ErrorWrapRead,e)
+					return nil, fmt.Errorf(ErrorWrapRead,e)
 				}
 			}
 
@@ -997,20 +974,18 @@ func (this Object) Read(r io.Reader) (e error){
 			a = make([]byte,2)
 			n, e = r.Read(a)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 2 != n {
-				return fmt.Errorf("Data expected (2) found (%d).",n)
+				return nil, fmt.Errorf("Data expected (2) found (%d).",n)
 			} else {
-				this = concatenate(this,a)
-
+				this = this.Concatenate(a)
 				b = make([]byte,0)
-				e = b.Read(r)
+				b, e = b.Read(r)
 				if nil == e {
-					this = concatenate(this,b)
-
-					return nil
+					this = this.Concatenate(b)
+					return this, nil
 				} else {
-					return fmt.Errorf(ErrorWrapRead,e)
+					return nil, fmt.Errorf(ErrorWrapRead,e)
 				}
 			}
 
@@ -1021,20 +996,18 @@ func (this Object) Read(r io.Reader) (e error){
 			a = make([]byte,4)
 			n, e = r.Read(a)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 4 != n {
-				return fmt.Errorf("Data expected (4) found (%d).",n)
+				return nil, fmt.Errorf("Data expected (4) found (%d).",n)
 			} else {
-				this = concatenate(this,a)
-
+				this = this.Concatenate(a)
 				b = make([]byte,0)
-				e = b.Read(r)
+				b, e = b.Read(r)
 				if nil == e {
-					this = concatenate(this,b)
-
-					return nil
+					this = this.Concatenate(b)
+					return this, nil
 				} else {
-					return fmt.Errorf(ErrorWrapRead,e)
+					return nil, fmt.Errorf(ErrorWrapRead,e)
 				}
 			}
 
@@ -1045,20 +1018,18 @@ func (this Object) Read(r io.Reader) (e error){
 			a = make([]byte,8)
 			n, e = r.Read(a)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 8 != n {
-				return fmt.Errorf("Data expected (8) found (%d).",n)
+				return nil, fmt.Errorf("Data expected (8) found (%d).",n)
 			} else {
-				this = concatenate(this,a)
-
+				this = this.Concatenate(a)
 				b = make([]byte,0)
-				e = b.Read(r)
+				b, e = b.Read(r)
 				if nil == e {
-					this = concatenate(this,b)
-
-					return nil
+					this = this.Concatenate(b)
+					return this, nil
 				} else {
-					return fmt.Errorf(ErrorWrapRead,e)
+					return nil, fmt.Errorf(ErrorWrapRead,e)
 				}
 			}
 
@@ -1066,31 +1037,31 @@ func (this Object) Read(r io.Reader) (e error){
 			/* (simple value)
 			 */
 			this = tag
-			return nil
+			return this, nil
 
 		case 0xF4:
 			/* "false"
 			 */
 			this = tag
-			return nil
+			return this, nil
 
 		case 0xF5:
 			/* "true"
 			 */
 			this = tag
-			return nil
+			return this, nil
 
 		case 0xF6:
 			/* "null"
 			 */
 			this = tag
-			return nil
+			return this, nil
 
 		case 0xF7:
 			/* "undefined"
 			 */
 			this = tag
-			return nil
+			return this, nil
 
 		case 0xF8:
 			/* (simple value, one byte follows)
@@ -1099,12 +1070,12 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,1)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 1 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
-				this = concatenate(this,d)
-				return nil
+				this = this.Concatenate(d)
+				return this, nil
 			}
 
 		case 0xF9:
@@ -1114,12 +1085,12 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,2)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 2 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
-				this = concatenate(this,d)
-				return nil
+				this = this.Concatenate(d)
+				return this, nil
 			}
 
 		case 0xFA:
@@ -1129,12 +1100,12 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,4)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 4 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
-				this = concatenate(this,d)
-				return nil
+				this = this.Concatenate(d)
+				return this, nil
 			}
 
 		case 0xFB:
@@ -1144,28 +1115,28 @@ func (this Object) Read(r io.Reader) (e error){
 			d = make([]byte,8)
 			n, e = r.Read(d)
 			if nil != e {
-				return fmt.Errorf(ErrorWrapRead,e)
+				return nil, fmt.Errorf(ErrorWrapRead,e)
 			} else if 8 != n {
-				return ErrorMissingData
+				return nil, ErrorMissingData
 			} else {
-				this = concatenate(this,d)
-				return nil
+				this = this.Concatenate(d)
+				return this, nil
 			}
 
 		case 0xFF:
 			/* 'break' stop code"
 			 */
 			this = tag
-			return Break
+			return nil, Break
 
 		default:
-			return ErrorUnrecognizedTag
+			return nil, ErrorUnrecognizedTag
 		}
 	}
 }
 /*
  */
-func (this Object) String() string {
+func (this *Object) String() string {
 	if this.HasTag() {
 		var tag Tag = this.Tag()
 		switch tag {
@@ -1366,25 +1337,28 @@ func copier(dst []byte, dx, dz int, src []byte, sx, sz int) ([]byte) {
 	}
 	return dst
 }
-func concatenate(a []byte, b []byte) (c []byte) {
-
+func (this Object) Concatenate(b []byte) (Object) {
+	var a []byte = this
 	var a_len int = len(a)
 	if 0 == a_len {
-		return b
+		this = b
 	} else {
 		var b_len int = len(b)
 		if 0 == b_len {
-			return b
+			this = b
 		} else {
 			var c_len int = (a_len+b_len)
 
-			c = make([]byte,c_len)
+			var c []byte = make([]byte,c_len)
 
-			copier(c,0,c_len,a,0,a_len)
+			c = copier(c,0,c_len,a,0,a_len)
 
-			return copier(c,a_len,c_len,b,0,b_len)
+			c = copier(c,a_len,c_len,b,0,b_len)
+
+			this = c
 		}
 	}
+	return this
 }
 /*
  * Define object as major type tag.
@@ -1501,56 +1475,56 @@ func Encode(a any) (this Object) {
 	case byte:
 		this = Define(MajorUint).Refine(1)
 		var hbo []byte = []byte{a.(byte)}
-		this = concatenate(this,hbo)
+		this = this.Concatenate(hbo)
 	case uint16:
 		this = Define(MajorUint).Refine(2)
 		var hbo []byte = make([]byte,2)
 		endian.BigEndian.EncodeUint16(hbo,a.(uint16))
-		this = concatenate(this,hbo)
+		this = this.Concatenate(hbo)
 	case uint32:
 		this = Define(MajorUint).Refine(4)
 		var hbo []byte = make([]byte,4)
 		endian.BigEndian.EncodeUint32(hbo,a.(uint32))
-		this = concatenate(this,hbo)
+		this = this.Concatenate(hbo)
 	case uint64:
 		this = Define(MajorUint).Refine(8)
 		var hbo []byte = make([]byte,8)
 		endian.BigEndian.EncodeUint64(hbo,a.(uint64))
-		this = concatenate(this,hbo)
+		this = this.Concatenate(hbo)
 
 	case int8:
 		this = Define(MajorSint).Refine(1)
 		var hbo []byte = []byte{a.(byte)}
-		this = concatenate(this,hbo)
+		this = this.Concatenate(hbo)
 	case int16:
 		this = Define(MajorSint).Refine(2)
 		var hbo []byte = make([]byte,2)
 		endian.BigEndian.EncodeUint16(hbo,a.(uint16))
-		this = concatenate(this,hbo)
+		this = this.Concatenate(hbo)
 	case int32:
 		this = Define(MajorSint).Refine(4)
 		var hbo []byte = make([]byte,4)
 		endian.BigEndian.EncodeUint32(hbo,a.(uint32))
-		this = concatenate(this,hbo)
+		this = this.Concatenate(hbo)
 	case int64:
 		this = Define(MajorSint).Refine(8)
 		var hbo []byte = make([]byte,8)
 		endian.BigEndian.EncodeUint64(hbo,a.(uint64))
-		this = concatenate(this,hbo)
+		this = this.Concatenate(hbo)
 
 	case []byte:
 		this = Define(MajorBlob)
 		var bry []byte = a.([]byte)
 		var brz uint64 = uint64(len(bry))
 		this = this.Refine(brz)
-		this = concatenate(this,bry)
+		this = this.Concatenate(bry)
 
 	case string:
 		this = Define(MajorText)
 		var str string = a.(string)
 		var stz uint64 = uint64(len(str))
 		this = this.Refine(stz)
-		this = concatenate(this,[]byte(str))
+		this = this.Concatenate([]byte(str))
 
 	case []any:
 		this = Define(MajorArray)
@@ -1559,7 +1533,7 @@ func Encode(a any) (this Object) {
 		this = this.Refine(arz)
 		for _, v := range ary {
 			var vo Object = Encode(v)
-			this = concatenate(this,[]byte(vo))
+			this = this.Concatenate([]byte(vo))
 		}
 
 	case map[string]any:
@@ -1569,10 +1543,10 @@ func Encode(a any) (this Object) {
 		this = this.Refine(mmz)
 		for k, v := range mmm {
 			var ko Object = Encode(k)
-			this = concatenate(this,[]byte(ko))
+			this = this.Concatenate([]byte(ko))
 
 			var vo Object = Encode(v)
-			this = concatenate(this,[]byte(vo))
+			this = this.Concatenate([]byte(vo))
 		}
 
 	case Coder:
@@ -1691,16 +1665,17 @@ func (this Object) Decode() (a any) {
 			var text []byte = this[9:(9+cnt)]
 			return text
 		case 0x5F:
-			var bary []byte
+			var bary Object
 			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
 			for true {
 				var o Object = Object{}
-				var e error = o.Read(b)
+				var e error
+				o, e = o.Read(b)
 				if nil != e {
 					break
 				} else {
 					var src []byte = o.Decode().([]byte)
-					bary = concatenate(bary, src)
+					bary.Concatenate(src)
 				}
 			}
 			return bary
@@ -1728,16 +1703,17 @@ func (this Object) Decode() (a any) {
 			var text []byte = this[9:(9+cnt)]
 			return string(text)
 		case 0x7F:
-			var bary []byte
+			var bary Object
 			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
 			for true {
 				var o Object = Object{}
-				var e error = o.Read(b)
+				var e error
+				o, e = o.Read(b)
 				if nil != e {
 					break
 				} else {
 					var src []byte = o.Decode().([]byte)
-					bary = concatenate(bary, src)
+					bary.Concatenate(src)
 				}
 			}
 			return string(bary)
@@ -1748,7 +1724,7 @@ func (this Object) Decode() (a any) {
 			var e error
 			for n = 0; n < m; n++ {
 				var o Object = Object{}
-				e = o.Read(b)
+				o, e = o.Read(b)
 				if nil != e {
 					break
 				} else {
@@ -1763,7 +1739,7 @@ func (this Object) Decode() (a any) {
 			var e error
 			for n = 0; n < m; n++ {
 				var o Object = Object{}
-				e = o.Read(b)
+				o, e = o.Read(b)
 				if nil != e {
 					break
 				} else {
@@ -1778,7 +1754,7 @@ func (this Object) Decode() (a any) {
 			var e error
 			for n = 0; n < m; n++ {
 				var o Object = Object{}
-				e = o.Read(b)
+				o, e = o.Read(b)
 				if nil != e {
 					break
 				} else {
@@ -1793,7 +1769,7 @@ func (this Object) Decode() (a any) {
 			var e error
 			for n = 0; n < m; n++ {
 				var o Object = Object{}
-				e = o.Read(b)
+				o, e = o.Read(b)
 				if nil != e {
 					break
 				} else {
@@ -1808,7 +1784,7 @@ func (this Object) Decode() (a any) {
 			var e error
 			for n = 0; n < m; n++ {
 				var o Object = Object{}
-				e = o.Read(b)
+				o, e = o.Read(b)
 				if nil != e {
 					break
 				} else {
@@ -1823,7 +1799,7 @@ func (this Object) Decode() (a any) {
 			var e error
 			for n = 0; n < m; n++ {
 				var o Object = Object{}
-				e = o.Read(b)
+				o, e = o.Read(b)
 				if nil != e {
 					break
 				} else {
@@ -1838,13 +1814,13 @@ func (this Object) Decode() (a any) {
 			var e error
 			for n = 0; n < m; n++ {
 				var ko Object = Object{}
-				e = ko.Read(b)
+				ko, e = ko.Read(b)
 				if nil != e {
 					break
 				} else {
 					var k any = ko.Decode()
 					var vo Object = Object{}
-					e = vo.Read(b)
+					vo, e = vo.Read(b)
 					if nil != e {
 						break
 					} else {
@@ -1861,13 +1837,13 @@ func (this Object) Decode() (a any) {
 			var e error
 			for n = 0; n < m; n++ {
 				var ko Object = Object{}
-				e = ko.Read(b)
+				ko, e = ko.Read(b)
 				if nil != e {
 					break
 				} else {
 					var k any = ko.Decode()
 					var vo Object = Object{}
-					e = vo.Read(b)
+					vo, e = vo.Read(b)
 					if nil != e {
 						break
 					} else {
@@ -1884,13 +1860,13 @@ func (this Object) Decode() (a any) {
 			var e error
 			for n = 0; n < m; n++ {
 				var ko Object = Object{}
-				e = ko.Read(b)
+				ko, e = ko.Read(b)
 				if nil != e {
 					break
 				} else {
 					var k any = ko.Decode()
 					var vo Object = Object{}
-					e = vo.Read(b)
+					vo, e = vo.Read(b)
 					if nil != e {
 						break
 					} else {
@@ -1907,13 +1883,13 @@ func (this Object) Decode() (a any) {
 			var e error
 			for n = 0; n < m; n++ {
 				var ko Object = Object{}
-				e = ko.Read(b)
+				ko, e = ko.Read(b)
 				if nil != e {
 					break
 				} else {
 					var k any = ko.Decode()
 					var vo Object = Object{}
-					e = vo.Read(b)
+					vo, e = vo.Read(b)
 					if nil != e {
 						break
 					} else {
@@ -1930,13 +1906,13 @@ func (this Object) Decode() (a any) {
 			var e error
 			for n = 0; n < m; n++ {
 				var ko Object = Object{}
-				e = ko.Read(b)
+				ko, e = ko.Read(b)
 				if nil != e {
 					break
 				} else {
 					var k any = ko.Decode()
 					var vo Object = Object{}
-					e = vo.Read(b)
+					vo, e = vo.Read(b)
 					if nil != e {
 						break
 					} else {
@@ -1952,13 +1928,13 @@ func (this Object) Decode() (a any) {
 			var e error = nil
 			for nil == e {
 				var ko Object = Object{}
-				e = ko.Read(b)
+				ko, e = ko.Read(b)
 				if nil != e {
 					break
 				} else {
 					var k any = ko.Decode()
 					var vo Object = Object{}
-					e = vo.Read(b)
+					vo, e = vo.Read(b)
 					if nil != e {
 						break
 					} else {
@@ -1971,8 +1947,11 @@ func (this Object) Decode() (a any) {
 		case 0xC0, 0xC1:
 			var a Object = Object{}
 			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
-			a.Read(b)
-			return a.Decode()
+			var e error
+			a, e = a.Read(b)
+			if nil == e {
+				return a.Decode()
+			} 
 		case 0xC2, 0xC3:
 			var a big.Int
 			a.SetBytes(this[1:])
