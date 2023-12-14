@@ -17,6 +17,7 @@ import (
 	"github.com/syntelos/go-endian"
 	"math"
 	"math/big"
+	"reflect"
 )
 /*
  * Encoded data set content object.
@@ -1374,7 +1375,8 @@ func Define(m Major) (this Object) {
 	return this
 }
 /*
- * Define object as major type tag refined by size.
+ * Define object as major type tag refined by size (in octet
+ * count).
  */
 func (this Object) Refine(size uint64) (Object) {
 
@@ -1470,88 +1472,149 @@ func (this Object) Refine(size uint64) (Object) {
  * Define object content.
  */
 func Encode(a any) (this Object) {
-	switch a.(type) {
+	if nil != a {
+		switch a.(type) {
 
-	case byte:
-		this = Define(MajorUint).Refine(1)
-		var hbo []byte = []byte{a.(byte)}
-		this = this.Concatenate(hbo)
-	case uint16:
-		this = Define(MajorUint).Refine(2)
-		var hbo []byte = make([]byte,2)
-		endian.BigEndian.EncodeUint16(hbo,a.(uint16))
-		this = this.Concatenate(hbo)
-	case uint32:
-		this = Define(MajorUint).Refine(4)
-		var hbo []byte = make([]byte,4)
-		endian.BigEndian.EncodeUint32(hbo,a.(uint32))
-		this = this.Concatenate(hbo)
-	case uint64:
-		this = Define(MajorUint).Refine(8)
-		var hbo []byte = make([]byte,8)
-		endian.BigEndian.EncodeUint64(hbo,a.(uint64))
-		this = this.Concatenate(hbo)
+		case byte:
+			this = Define(MajorUint).Refine(1)
+			var hbo []byte = []byte{a.(byte)}
+			this = this.Concatenate(hbo)
+		case uint16:
+			this = Define(MajorUint).Refine(2)
+			var hbo []byte = make([]byte,2)
+			endian.BigEndian.EncodeUint16(hbo,a.(uint16))
+			this = this.Concatenate(hbo)
+		case uint32:
+			this = Define(MajorUint).Refine(4)
+			var hbo []byte = make([]byte,4)
+			endian.BigEndian.EncodeUint32(hbo,a.(uint32))
+			this = this.Concatenate(hbo)
+		case uint64:
+			this = Define(MajorUint).Refine(8)
+			var hbo []byte = make([]byte,8)
+			endian.BigEndian.EncodeUint64(hbo,a.(uint64))
+			this = this.Concatenate(hbo)
 
-	case int8:
-		this = Define(MajorSint).Refine(1)
-		var hbo []byte = []byte{a.(byte)}
-		this = this.Concatenate(hbo)
-	case int16:
-		this = Define(MajorSint).Refine(2)
-		var hbo []byte = make([]byte,2)
-		endian.BigEndian.EncodeUint16(hbo,a.(uint16))
-		this = this.Concatenate(hbo)
-	case int32:
-		this = Define(MajorSint).Refine(4)
-		var hbo []byte = make([]byte,4)
-		endian.BigEndian.EncodeUint32(hbo,a.(uint32))
-		this = this.Concatenate(hbo)
-	case int64:
-		this = Define(MajorSint).Refine(8)
-		var hbo []byte = make([]byte,8)
-		endian.BigEndian.EncodeUint64(hbo,a.(uint64))
-		this = this.Concatenate(hbo)
+		case int8:
+			this = Define(MajorSint).Refine(1)
+			var hbo []byte = []byte{a.(byte)}
+			this = this.Concatenate(hbo)
+		case int16:
+			this = Define(MajorSint).Refine(2)
+			var hbo []byte = make([]byte,2)
+			endian.BigEndian.EncodeUint16(hbo,a.(uint16))
+			this = this.Concatenate(hbo)
+		case int32:
+			this = Define(MajorSint).Refine(4)
+			var hbo []byte = make([]byte,4)
+			endian.BigEndian.EncodeUint32(hbo,a.(uint32))
+			this = this.Concatenate(hbo)
+		case int64:
+			this = Define(MajorSint).Refine(8)
+			var hbo []byte = make([]byte,8)
+			endian.BigEndian.EncodeUint64(hbo,a.(uint64))
+			this = this.Concatenate(hbo)
 
-	case []byte:
-		this = Define(MajorBlob)
-		var bry []byte = a.([]byte)
-		var brz uint64 = uint64(len(bry))
-		this = this.Refine(brz)
-		this = this.Concatenate(bry)
+		case int:
+			var val int = a.(int)
+			var typ reflect.Type = reflect.TypeOf(a)
+			var siz uint64 = uint64(typ.Size())
+			switch siz {
+			case 4:
+				this = Define(MajorSint).Refine(siz)
+				var hbo []byte = make([]byte,siz)
+				endian.BigEndian.EncodeUint32(hbo,uint32(val))
+				this = this.Concatenate(hbo)
+			case 8:
+				this = Define(MajorSint).Refine(siz)
+				var hbo []byte = make([]byte,siz)
+				endian.BigEndian.EncodeUint64(hbo,uint64(val))
+				this = this.Concatenate(hbo)
+			}
 
-	case string:
-		this = Define(MajorText)
-		var str string = a.(string)
-		var stz uint64 = uint64(len(str))
-		this = this.Refine(stz)
-		this = this.Concatenate([]byte(str))
+		case uint:
+			var val uint = a.(uint)
+			var typ reflect.Type = reflect.TypeOf(a)
+			var siz uint64 = uint64(typ.Size())
+			switch siz {
+			case 4:
+				this = Define(MajorUint).Refine(siz)
+				var hbo []byte = make([]byte,siz)
+				endian.BigEndian.EncodeUint32(hbo,uint32(val))
+				this = this.Concatenate(hbo)
+			case 8:
+				this = Define(MajorUint).Refine(siz)
+				var hbo []byte = make([]byte,siz)
+				endian.BigEndian.EncodeUint64(hbo,uint64(val))
+				this = this.Concatenate(hbo)
+			}
 
-	case []any:
-		this = Define(MajorArray)
-		var ary []any = a.([]any)
-		var arz uint64 = uint64(len(ary))
-		this = this.Refine(arz)
-		for _, v := range ary {
-			var vo Object = Encode(v)
-			this = this.Concatenate([]byte(vo))
+		case uintptr:
+			var val uintptr = a.(uintptr)
+			var typ reflect.Type = reflect.TypeOf(a)
+			var siz uint64 = uint64(typ.Size())
+			switch siz {
+			case 4:
+				this = Define(MajorUint).Refine(siz)
+				var hbo []byte = make([]byte,siz)
+				endian.BigEndian.EncodeUint32(hbo,uint32(val))
+				this = this.Concatenate(hbo)
+			case 8:
+				this = Define(MajorUint).Refine(siz)
+				var hbo []byte = make([]byte,siz)
+				endian.BigEndian.EncodeUint64(hbo,uint64(val))
+				this = this.Concatenate(hbo)
+			}
+
+
+		case []byte:
+			this = Define(MajorBlob)
+			var bry []byte = a.([]byte)
+			var brz uint64 = uint64(len(bry))
+			this = this.Refine(brz)
+			this = this.Concatenate(bry)
+
+		case string:
+			this = Define(MajorText)
+			var str string = a.(string)
+			var stz uint64 = uint64(len(str))
+			this = this.Refine(stz)
+			this = this.Concatenate([]byte(str))
+
+		case []any:
+			this = Define(MajorArray)
+			var ary []any = a.([]any)
+			var arz uint64 = uint64(len(ary))
+			this = this.Refine(arz)
+			for _, v := range ary {
+				var vo Object = Encode(v)
+				this = this.Concatenate([]byte(vo))
+			}
+
+		case map[string]any:
+			this = Define(MajorMap)
+			var mmm map[string]any = a.(map[string]any)
+			var mmz uint64 = uint64(len(mmm))
+			this = this.Refine(mmz)
+			for k, v := range mmm {
+				var ko Object = Encode(k)
+				this = this.Concatenate([]byte(ko))
+
+				var vo Object = Encode(v)
+				this = this.Concatenate([]byte(vo))
+			}
+
+		case Coder:
+			var coder Coder = a.(Coder)
+			this = coder.Encode()
+
+		default:
+			var undefined Object = Object{0xF7}
+			this = undefined
 		}
-
-	case map[string]any:
-		this = Define(MajorMap)
-		var mmm map[string]any = a.(map[string]any)
-		var mmz uint64 = uint64(len(mmm))
-		this = this.Refine(mmz)
-		for k, v := range mmm {
-			var ko Object = Encode(k)
-			this = this.Concatenate([]byte(ko))
-
-			var vo Object = Encode(v)
-			this = this.Concatenate([]byte(vo))
-		}
-
-	case Coder:
-		var coder Coder = a.(Coder)
-		this = coder.Encode()
+	} else {
+		var null Object = Object{0xF6}
+		this = null
 	}
 	return this
 }
