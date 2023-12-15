@@ -1888,14 +1888,14 @@ func (this Object) Decode() (a any) {
 				if nil != e {
 					break
 				} else {
-					a = ko.Decode()
-					if nil != a {
-						var k string = a.(string)
-						var vo Object = Object{}
-						vo, e = vo.Read(b)
-						if nil != e {
-							break
-						} else {
+					var vo Object = Object{}
+					vo, e = vo.Read(b)
+					if nil != e {
+						break
+					} else {
+						a = ko.Decode()
+						if nil != a {
+							var k string = a.(string)
 							o[k] = vo.Decode()
 						}
 					}
@@ -1913,14 +1913,14 @@ func (this Object) Decode() (a any) {
 				if nil != e {
 					break
 				} else {
-					a = ko.Decode()
-					if nil != a {
-						var k string = a.(string)
-						var vo Object = Object{}
-						vo, e = vo.Read(b)
-						if nil != e {
-							break
-						} else {
+					var vo Object = Object{}
+					vo, e = vo.Read(b)
+					if nil != e {
+						break
+					} else {
+						a = ko.Decode()
+						if nil != a {
+							var k string = a.(string)
 							o[k] = vo.Decode()
 						}
 					}
@@ -1938,14 +1938,14 @@ func (this Object) Decode() (a any) {
 				if nil != e {
 					break
 				} else {
-					a = ko.Decode()
-					if nil != a {
-						var k string = a.(string)
-						var vo Object = Object{}
-						vo, e = vo.Read(b)
-						if nil != e {
-							break
-						} else {
+					var vo Object = Object{}
+					vo, e = vo.Read(b)
+					if nil != e {
+						break
+					} else {
+						a = ko.Decode()
+						if nil != a {
+							var k string = a.(string)
 							o[k] = vo.Decode()
 						}
 					}
@@ -1963,14 +1963,14 @@ func (this Object) Decode() (a any) {
 				if nil != e {
 					break
 				} else {
-					a = ko.Decode()
-					if nil != a {
-						var k string = a.(string)
-						var vo Object = Object{}
-						vo, e = vo.Read(b)
-						if nil != e {
-							break
-						} else {
+					var vo Object = Object{}
+					vo, e = vo.Read(b)
+					if nil != e {
+						break
+					} else {
+						a = ko.Decode()
+						if nil != a {
+							var k string = a.(string)
 							o[k] = vo.Decode()
 						}
 					}
@@ -1988,14 +1988,14 @@ func (this Object) Decode() (a any) {
 				if nil != e {
 					break
 				} else {
-					a = ko.Decode()
-					if nil != a {
-						var k string = a.(string)
-						var vo Object = Object{}
-						vo, e = vo.Read(b)
-						if nil != e {
-							break
-						} else {
+					var vo Object = Object{}
+					vo, e = vo.Read(b)
+					if nil != e {
+						break
+					} else {
+						a = ko.Decode()
+						if nil != a {
+							var k string = a.(string)
 							o[k] = vo.Decode()
 						}
 					}
@@ -2012,14 +2012,14 @@ func (this Object) Decode() (a any) {
 				if nil != e {
 					break
 				} else {
-					a = ko.Decode()
-					if nil != a {
-						var k string = a.(string)
-						var vo Object = Object{}
-						vo, e = vo.Read(b)
-						if nil != e {
-							break
-						} else {
+					var vo Object = Object{}
+					vo, e = vo.Read(b)
+					if nil != e {
+						break
+					} else {
+						a = ko.Decode()
+						if nil != a {
+							var k string = a.(string)
 							o[k] = vo.Decode()
 						}
 					}
@@ -2045,7 +2045,7 @@ func (this Object) Decode() (a any) {
 		case 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4:
 			// [TODO] tag (content hints)
 		case 0xD5, 0xD6, 0xD7:
-			// [TODO] expected conversion (base)
+			// [TODO] expected conversion (encoding/base)
 		case 0xD8, 0xD9, 0xDA, 0xDB:
 			// [TODO] tagged data
 		case 0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF, 0xF0, 0xF1, 0xF2, 0xF3:
