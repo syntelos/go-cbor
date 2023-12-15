@@ -1596,7 +1596,7 @@ func Encode(a any) (this Object) {
 			var mmm map[string]any = a.(map[string]any)
 			var mmz uint64 = uint64(len(mmm))
 			this = this.Refine(mmz)
-			for k, v := range mmm {
+			for k, v := range mmm { // BREAKPOINT
 				var ko Object = Encode(k)
 				this = this.Concatenate([]byte(ko))
 
@@ -1882,7 +1882,7 @@ func (this Object) Decode() (a any) {
 			var o map[string]any = make(map[string]any,m)
 			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
 			var e error
-			for n = 0; n < m; n++ {
+			for n = 0; n < m; n++ { // BREAKPOINT
 				var ko Object = Object{}
 				ko, e = ko.Read(b)
 				if nil != e {
