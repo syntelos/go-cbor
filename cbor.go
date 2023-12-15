@@ -1752,7 +1752,7 @@ func (this Object) Decode() (a any) {
 			return string(text)
 		case 0x78:
 			var cnt uint8 = this[1]
-			var text []byte = this[2:(3+cnt)]
+			var text []byte = this[2:(2+cnt)]
 			return string(text)
 		case 0x79:
 			var cnt_ary []byte = this[1:2]
