@@ -1658,7 +1658,7 @@ func (this Object) Decode() (a any) {
 			return value
 		case 0x1B:
 			var cnt_ary []byte = this[1:8]
-			var cnt uint32 = endian.BigEndian.DecodeUint32(cnt_ary)
+			var cnt uint64 = endian.BigEndian.DecodeUint64(cnt_ary)
 			var text []byte = this[9:(9+cnt)]
 			var value big.Int
 			value.SetBytes(text)
@@ -1700,7 +1700,7 @@ func (this Object) Decode() (a any) {
 			return value
 		case 0x3B:
 			var cnt_ary []byte = this[1:8]
-			var cnt uint32 = endian.BigEndian.DecodeUint32(cnt_ary)
+			var cnt uint64 = endian.BigEndian.DecodeUint64(cnt_ary)
 			var text []byte = this[9:(9+cnt)]
 			var value big.Int
 			value.SetBytes(text)
@@ -1863,17 +1863,16 @@ func (this Object) Decode() (a any) {
 			}
 			return a
 		case 0x9F:
-			var m, n uint64 = endian.BigEndian.DecodeUint64(this[1:8]), 0
-			var a []any = make([]any,m)
-			var b *bytes.Buffer = bytes.NewBuffer(this[9:])
+			var a []any = make([]any,0)
+			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
 			var e error
-			for n = 0; n < m; n++ {
+			for true {
 				var o Object = Object{}
 				o, e = o.Read(b)
 				if nil != e {
 					break
 				} else {
-					a[n] = o.Decode()
+					a = append(a, o.Decode())
 				}
 			}
 			return a
@@ -2076,4 +2075,387 @@ func (this Object) Decode() (a any) {
 		}
 	}
 	return nil
+}
+/*
+ * Represent object structure.
+ */
+func (this Object) Describe() (string) {
+	if this.HasTag() {
+		var tag Tag = this.Tag()
+		var desc string = fmt.Sprintf("<tag[0x%02X]>",tag)
+		switch tag { 
+		case 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17:
+		case 0x18:
+			var cnt uint8 = this[1]
+			desc = fmt.Sprintf("%s<uint8>",desc)
+			switch cnt {
+			case 2:
+				desc = fmt.Sprintf("%s<uint16>",desc)
+			case 4:
+				desc = fmt.Sprintf("%s<uint32>",desc)
+			case 8:
+				desc = fmt.Sprintf("%s<uint64>",desc)
+			default:
+				desc = fmt.Sprintf("%s<int[%d]>",desc,cnt)
+			}
+		case 0x19:
+			var cnt_ary []byte = this[1:2]
+			var cnt uint16 = endian.BigEndian.DecodeUint16(cnt_ary)
+			desc = fmt.Sprintf("%s<uint16><int[%d]>",desc,cnt)
+		case 0x1A:
+			var cnt_ary []byte = this[1:4]
+			var cnt uint32 = endian.BigEndian.DecodeUint32(cnt_ary)
+			desc = fmt.Sprintf("%s<uint32><byte[%d]>",desc,cnt)
+		case 0x1B:
+			var cnt_ary []byte = this[1:8]
+			var cnt uint64 = endian.BigEndian.DecodeUint64(cnt_ary)
+			desc = fmt.Sprintf("%s<uint64><byte[%d]>",desc,cnt)
+		case 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37:
+		case 0x38:
+			var cnt uint8 = this[1]
+			switch cnt {
+			case 2:
+				desc = fmt.Sprintf("%s<uint8><uint16>",desc)
+			case 4:
+				desc = fmt.Sprintf("%s<uint8><uint32>",desc)
+			case 8:
+				desc = fmt.Sprintf("%s<uint8><uint64>",desc)
+			default:
+				desc = fmt.Sprintf("%s<uint8><byte[%d]>",desc,cnt)
+			}
+		case 0x39:
+			var cnt_ary []byte = this[1:2]
+			var cnt uint16 = endian.BigEndian.DecodeUint16(cnt_ary)
+			desc = fmt.Sprintf("%s<uint16><byte[%d]>",desc,cnt)
+		case 0x3A:
+			var cnt_ary []byte = this[1:4]
+			var cnt uint32 = endian.BigEndian.DecodeUint32(cnt_ary)
+			desc = fmt.Sprintf("%s<uint32><byte[%d]>",desc,cnt)
+		case 0x3B:
+			var cnt_ary []byte = this[1:8]
+			var cnt uint64 = endian.BigEndian.DecodeUint64(cnt_ary)
+			desc = fmt.Sprintf("%s<uint64><byte[%d]>",desc,cnt)
+		case 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57:
+			var m int = int(tag-0x40)
+			desc = fmt.Sprintf("%s<byte[%d]>",desc,m)
+		case 0x58:
+			var cnt uint8 = this[1]
+			desc = fmt.Sprintf("%s<uint8><byte[%d]>",desc,cnt)
+		case 0x59:
+			var cnt_ary []byte = this[1:2]
+			var cnt uint16 = endian.BigEndian.DecodeUint16(cnt_ary)
+			desc = fmt.Sprintf("%s<uint16><byte[%d]>",desc,cnt)
+		case 0x5A:
+			var cnt_ary []byte = this[1:4]
+			var cnt uint32 = endian.BigEndian.DecodeUint32(cnt_ary)
+			desc = fmt.Sprintf("%s<uint32><byte[%d]>",desc,cnt)
+		case 0x5B:
+			var cnt_ary []byte = this[1:8]
+			var cnt uint64 = endian.BigEndian.DecodeUint64(cnt_ary)
+			desc = fmt.Sprintf("%s<uint64><byte[%d]>",desc,cnt)
+		case 0x5F:
+			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
+			for true {
+				var o Object = Object{}
+				var e error
+				o, e = o.Read(b)
+				if nil != e {
+					if Break == e {
+						desc = fmt.Sprintf("%s<break>",desc)
+					}
+					return desc
+				} else {
+					desc = fmt.Sprintf("%s%s",desc,o.Describe())
+				}
+			}
+			return desc
+
+		case 0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F, 0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77:
+			var m int = int(tag-0x60)
+			desc = fmt.Sprintf("%s<byte[%d]>",desc,m)
+		case 0x78:
+			var cnt uint8 = this[1]
+			desc = fmt.Sprintf("%s<uint8><byte[%d]>",desc,cnt)
+		case 0x79:
+			var cnt_ary []byte = this[1:2]
+			var cnt uint16 = endian.BigEndian.DecodeUint16(cnt_ary)
+			desc = fmt.Sprintf("%s<uint16><byte[%d]>",desc,cnt)
+		case 0x7A:
+			var cnt_ary []byte = this[1:4]
+			var cnt uint32 = endian.BigEndian.DecodeUint32(cnt_ary)
+			desc = fmt.Sprintf("%s<uint32><byte[%d]>",desc,cnt)
+		case 0x7B:
+			var cnt_ary []byte = this[1:8]
+			var cnt uint64 = endian.BigEndian.DecodeUint64(cnt_ary)
+			desc = fmt.Sprintf("%s<uint64><byte[%d]>",desc,cnt)
+		case 0x7F:
+			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
+			for true {
+				var o Object = Object{}
+				var e error
+				o, e = o.Read(b)
+				if nil != e {
+					desc = fmt.Sprintf(desc,"<break>")
+					break
+				} else {
+					desc = fmt.Sprintf("%s%s",desc,o.Describe())
+				}
+			}
+			return desc
+		case 0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F, 0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97:
+			var m, n int = int(tag-0x80), 0
+			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
+			var e error
+			for n = 0; n < m; n++ {
+				var o Object = Object{}
+				o, e = o.Read(b)
+				if nil != e {
+					break
+				} else {
+					desc = fmt.Sprintf("%s%s",desc,o.Describe())
+				}
+			}
+			return desc
+		case 0x98:
+			var m, n uint8 = uint8(this[1]), 0
+			desc = fmt.Sprintf("%s<uint8[%d]>",desc,m)
+			var b *bytes.Buffer = bytes.NewBuffer(this[2:])
+			var e error
+			for n = 0; n < m; n++ {
+				var o Object = Object{}
+				o, e = o.Read(b)
+				if nil != e {
+					break
+				} else {
+					desc = fmt.Sprintf("%s%s",desc,o.Describe())
+				}
+			}
+			return desc
+		case 0x99:
+			var m, n uint16 = endian.BigEndian.DecodeUint16(this[1:2]), 0
+			desc = fmt.Sprintf("%s<uint16[%d]>",desc,m)
+			var b *bytes.Buffer = bytes.NewBuffer(this[3:])
+			var e error
+			for n = 0; n < m; n++ {
+				var o Object = Object{}
+				o, e = o.Read(b)
+				if nil != e {
+					break
+				} else {
+					desc = fmt.Sprintf("%s%s",desc,o.Describe())
+				}
+			}
+			return desc
+		case 0x9A:
+			var m, n uint32 = endian.BigEndian.DecodeUint32(this[1:4]), 0
+			desc = fmt.Sprintf("%s<uint32[%d]>",desc,m)
+			var b *bytes.Buffer = bytes.NewBuffer(this[5:])
+			var e error
+			for n = 0; n < m; n++ {
+				var o Object = Object{}
+				o, e = o.Read(b)
+				if nil != e {
+					break
+				} else {
+					desc = fmt.Sprintf("%s%s",desc,o.Describe())
+				}
+			}
+			return desc
+		case 0x9B:
+			var m, n uint64 = endian.BigEndian.DecodeUint64(this[1:8]), 0
+			desc = fmt.Sprintf("%s<uint64[%d]>",desc,m)
+			var b *bytes.Buffer = bytes.NewBuffer(this[9:])
+			var e error
+			for n = 0; n < m; n++ {
+				var o Object = Object{}
+				o, e = o.Read(b)
+				if nil != e {
+					break
+				} else {
+					desc = fmt.Sprintf("%s%s",desc,o.Describe())
+				}
+			}
+			return desc
+		case 0x9F:
+			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
+			var e error
+			for true {
+				var o Object = Object{}
+				o, e = o.Read(b)
+				if nil != e {
+					desc = fmt.Sprintf("%s<break>",desc)
+					break
+				} else {
+					desc = fmt.Sprintf("%s%s",desc,o.Describe())
+				}
+			}
+			return desc
+		case 0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7, 0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF, 0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7:
+			var m, n int = int(tag-0xA0), 0
+			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
+			var e error
+			for n = 0; n < m; n++ {
+				var ko Object = Object{}
+				ko, e = ko.Read(b)
+				if nil != e {
+					break
+				} else {
+					var vo Object = Object{}
+					vo, e = vo.Read(b)
+					if nil != e {
+						break
+					} else {
+						desc = fmt.Sprintf("%s%s",desc,ko.Describe())
+
+						desc = fmt.Sprintf("%s%s",desc,vo.Describe())
+					}
+				}
+			}
+			return desc
+		case 0xB8:
+			var m, n uint8 = uint8(this[1]), 0
+			desc = fmt.Sprintf("%s<uint8[%d]>",desc,m)
+			var b *bytes.Buffer = bytes.NewBuffer(this[2:])
+			var e error
+			for n = 0; n < m; n++ {
+				var ko Object = Object{}
+				ko, e = ko.Read(b)
+				if nil != e {
+					break
+				} else {
+					var vo Object = Object{}
+					vo, e = vo.Read(b)
+					if nil != e {
+						break
+					} else {
+						desc = fmt.Sprintf("%s%s",desc,ko.Describe())
+
+						desc = fmt.Sprintf("%s%s",desc,vo.Describe())
+					}
+				}
+			}
+			return desc
+		case 0xB9:
+			var m, n uint16 = endian.BigEndian.DecodeUint16(this[1:2]), 0
+			desc = fmt.Sprintf("%s<uint16[%d]>",desc,m)
+			var b *bytes.Buffer = bytes.NewBuffer(this[3:])
+			var e error
+			for n = 0; n < m; n++ {
+				var ko Object = Object{}
+				ko, e = ko.Read(b)
+				if nil != e {
+					break
+				} else {
+					var vo Object = Object{}
+					vo, e = vo.Read(b)
+					if nil != e {
+						break
+					} else {
+						desc = fmt.Sprintf("%s%s",desc,ko.Describe())
+
+						desc = fmt.Sprintf("%s%s",desc,vo.Describe())
+					}
+				}
+			}
+			return desc
+		case 0xBA:
+			var m, n uint32 = endian.BigEndian.DecodeUint32(this[1:4]), 0
+			desc = fmt.Sprintf("%s<uint32[%d]>",desc,m)
+			var b *bytes.Buffer = bytes.NewBuffer(this[5:])
+			var e error
+			for n = 0; n < m; n++ {
+				var ko Object = Object{}
+				ko, e = ko.Read(b)
+				if nil != e {
+					break
+				} else {
+					var vo Object = Object{}
+					vo, e = vo.Read(b)
+					if nil != e {
+						break
+					} else {
+						desc = fmt.Sprintf("%s%s",desc,ko.Describe())
+
+						desc = fmt.Sprintf("%s%s",desc,vo.Describe())
+					}
+				}
+			}
+			return desc
+		case 0xBB:
+			var m, n uint64 = endian.BigEndian.DecodeUint64(this[1:8]), 0
+			desc = fmt.Sprintf("%s<uint64[%d]>",desc,m)
+			var b *bytes.Buffer = bytes.NewBuffer(this[9:])
+			var e error
+			for n = 0; n < m; n++ {
+				var ko Object = Object{}
+				ko, e = ko.Read(b)
+				if nil != e {
+					break
+				} else {
+					var vo Object = Object{}
+					vo, e = vo.Read(b)
+					if nil != e {
+						break
+					} else {
+						desc = fmt.Sprintf("%s%s",desc,ko.Describe())
+
+						desc = fmt.Sprintf("%s%s",desc,vo.Describe())
+					}
+				}
+			}
+			return desc
+		case 0xBF:
+			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
+			var e error = nil
+			for nil == e {
+				var ko Object = Object{}
+				ko, e = ko.Read(b)
+				if nil != e {
+					if Break == e {
+						desc = fmt.Sprintf("%s<break>",desc)
+					}
+					break
+				} else {
+					var vo Object = Object{}
+					vo, e = vo.Read(b)
+					if nil != e {
+						break
+					} else {
+						desc = fmt.Sprintf("%s%s",desc,ko.Describe())
+
+						desc = fmt.Sprintf("%s%s",desc,vo.Describe())
+					}
+				}
+			}
+			return desc
+		case 0xC0, 0xC1:
+			var a Object = Object{}
+			var b *bytes.Buffer = bytes.NewBuffer(this[1:])
+			var e error
+			a, e = a.Read(b)
+			if nil == e {
+				desc = fmt.Sprintf("%s%s",desc,a.Describe())
+			}
+			return desc
+		case 0xC2, 0xC3:
+		case 0xC4:
+		case 0xC5:
+		case 0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4:
+		case 0xD5, 0xD6, 0xD7:
+		case 0xD8, 0xD9, 0xDA, 0xDB:
+		case 0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF, 0xF0, 0xF1, 0xF2, 0xF3:
+		case 0xF4:
+		case 0xF5:
+		case 0xF6, 0xF7:
+		case 0xF8:
+		case 0xF9:
+		case 0xFA:
+		case 0xFB:
+		case 0xFF:
+		}
+
+		return desc
+	} else {
+		return ""
+	}	
 }

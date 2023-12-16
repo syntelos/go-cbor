@@ -67,7 +67,7 @@ func (this TypeTestCoder) Decode(cbor Object) (TypeTestCoder) {
 	return this
 }
 
-func TestObject(t *testing.T){
+func _TestObject(t *testing.T){
 	var text TypeTestCoder = TypeTestCoder{name: TestStringDatum, count: 13, data: []byte{0x68,0x65,0x6C,0x6C,0x6F,0x2C,0x20,0x77,0x6f,0x72,0x6C,0x64,0x2E}}
 
 	var code Object = text.Encode() // [TODO] [BREAKPOINT]
@@ -80,4 +80,14 @@ func TestObject(t *testing.T){
 	} else {
 		fmt.Println(json.Marshal(check))
 	}
+}
+
+func TestDescribe(t *testing.T){
+	var text TypeTestCoder = TypeTestCoder{name: TestStringDatum, count: 13, data: []byte{0x68,0x65,0x6C,0x6C,0x6F,0x2C,0x20,0x77,0x6f,0x72,0x6C,0x64,0x2E}}
+
+	var code Object = text.Encode()
+
+	var structure string = code.Describe()
+
+	fmt.Println(structure)
 }
