@@ -67,21 +67,6 @@ func (this TypeTestCoder) Decode(cbor Object) (TypeTestCoder) {
 	return this
 }
 
-func _TestObject(t *testing.T){
-	var text TypeTestCoder = TypeTestCoder{name: TestStringDatum, count: 13, data: []byte{0x68,0x65,0x6C,0x6C,0x6F,0x2C,0x20,0x77,0x6f,0x72,0x6C,0x64,0x2E}}
-
-	var code Object = text.Encode() // [TODO] [BREAKPOINT]
-
-	var check TypeTestCoder = text.Decode(code)
-	
-	if 0 == len(check.name) || 0 == check.count || 0 == len(check.data) {
-
-		t.Error("Empty result of decoding.")
-	} else {
-		fmt.Println(json.Marshal(check))
-	}
-}
-
 func TestDescribe(t *testing.T){
 	var text TypeTestCoder = TypeTestCoder{name: TestStringDatum, count: 13, data: []byte{0x68,0x65,0x6C,0x6C,0x6F,0x2C,0x20,0x77,0x6f,0x72,0x6C,0x64,0x2E}}
 
@@ -90,4 +75,19 @@ func TestDescribe(t *testing.T){
 	var structure string = code.Describe()
 
 	fmt.Println(structure)
+}
+
+func TestObject(t *testing.T){
+	var text TypeTestCoder = TypeTestCoder{name: TestStringDatum, count: 13, data: []byte{0x68,0x65,0x6C,0x6C,0x6F,0x2C,0x20,0x77,0x6f,0x72,0x6C,0x64,0x2E}}
+
+	var code Object = text.Encode()
+
+	var check TypeTestCoder = text.Decode(code) // [TODO] [BREAKPOINT]
+	
+	if 0 == len(check.name) || 0 == check.count || 0 == len(check.data) {
+
+		t.Error("Empty result of decoding.")
+	} else {
+		fmt.Println(json.Marshal(check))
+	}
 }

@@ -1,4 +1,6 @@
 github.com/syntelos/go-endian v0.0.0-20231204214038-a61f27876b43 h1:+4pfXk1TuFWbnXQZxvQ5esuL/fu8mjlAtSYPB1ILqKw=
 github.com/syntelos/go-endian v0.0.0-20231204214038-a61f27876b43/go.mod h1:K7KcAV1vyqljVZ3onkYGAk1mLYymqIp13tvoMYpXzz0=
+github.com/syntelos/go-endian v0.0.0-20231216185931-3b37b1ee7029 h1:0eAyPymSIoTMjakS0fN7QcbCDURuEj8nED0jGJsLn9o=
+github.com/syntelos/go-endian v0.0.0-20231216185931-3b37b1ee7029/go.mod h1:0WomIGIeFDNZGlL2I6AQMuBNrDDlo7KOi8xM+7XyEeo=
 golang.org/x/sys v0.15.0 h1:h48lPFYpsTvQJZF4EKyI4aLHaev3CxivZmv7yZig9pc=
 golang.org/x/sys v0.15.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
