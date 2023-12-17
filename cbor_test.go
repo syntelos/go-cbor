@@ -44,7 +44,7 @@ type TypeTestCoder struct {
 func (this TypeTestCoder) Encode() (code Object) {
 	var text map[string]any = map[string]any{ "name": this.name, "count": this.count, "data": this.data}
 
-	code = Encode(text)
+	code = Encode(text) // [TODO] [BREAKPOINT]
 	return code
 }
 func (this TypeTestCoder) Decode(cbor Object) (TypeTestCoder) {
@@ -82,7 +82,7 @@ func TestObject(t *testing.T){
 
 	var code Object = text.Encode()
 
-	var check TypeTestCoder = text.Decode(code) // [TODO] [BREAKPOINT]
+	var check TypeTestCoder = text.Decode(code)
 	
 	if 0 == len(check.name) || 0 == check.count || 0 == len(check.data) {
 
