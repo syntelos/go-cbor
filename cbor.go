@@ -1366,11 +1366,9 @@ func (this Object) Concatenate(b []byte) (Object) {
  */
 func Define(m Major) (this Object) {
 
-	this = make([]byte,1)
-
 	var major byte = ((byte(m) & 7) << 5)
 
-	this[0] = major
+	this = Object{major}
 
 	return this
 }
