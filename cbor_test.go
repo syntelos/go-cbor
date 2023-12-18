@@ -17,6 +17,8 @@ import (
 
 const TestStringDatum string = "hello, world."
 
+var TestStringCode []byte = []byte{0x68,0x65,0x6C,0x6C,0x6F,0x2C,0x20,0x77,0x6f,0x72,0x6C,0x64,0x2E}
+
 func TestString(t *testing.T){
 	var s string = TestStringDatum
 	var o Object = Encode(s)
@@ -41,6 +43,32 @@ type TypeTestCoder struct {
 	data []byte
 }
 
+var TypeTestCoderObject TypeTestCoder = TypeTestCoder{name: TestStringDatum, count: len(TestStringDatum), data: TestStringCode}
+
+func (this TypeTestCoder) Equals(that TypeTestCoder) (bool) {
+	if this.name == that.name && this.count == that.count {
+		var m, n, o int = 0, len(this.data), len(that.data)
+		if n == o {
+			for ; n < m; n++ {
+				if this.data[n] != that.data[n] {
+					return false
+				}
+			}
+			return true
+		}
+	}
+	return false
+}
+func (this TypeTestCoder) String() (string) {
+	var by []byte
+	var er error
+	by, er = json.Marshal(this)
+	if nil == er {
+		return string(by)
+	} else {
+		return ""
+	}
+}
 func (this TypeTestCoder) Encode() (code Object) {
 	var text map[string]any = map[string]any{ "name": this.name, "count": this.count, "data": this.data}
 
@@ -54,21 +82,15 @@ func (this TypeTestCoder) Decode(cbor Object) (TypeTestCoder) {
 
 	var text map[string]any = cbor.Decode().(map[string]any) // [TODO] [BUG]
 
-	var by []byte
-	var er error
-	by, er = json.Marshal(text)
-	if nil == er {
-		this.name = text["name"].(string)
-		this.count = text["count"].(int)
-		this.data = text["data"].([]byte)
+	this.name = text["name"].(string)
+	this.count = text["count"].(int)
+	this.data = text["data"].([]byte)
 
-		fmt.Println(string(by))
-	}
 	return this
 }
 
 func TestDescribe(t *testing.T){
-	var text TypeTestCoder = TypeTestCoder{name: TestStringDatum, count: 13, data: []byte{0x68,0x65,0x6C,0x6C,0x6F,0x2C,0x20,0x77,0x6f,0x72,0x6C,0x64,0x2E}}
+	var text TypeTestCoder = TypeTestCoderObject
 
 	var code Object = text.Encode()
 
@@ -78,15 +100,15 @@ func TestDescribe(t *testing.T){
 }
 
 func TestObject(t *testing.T){
-	var text TypeTestCoder = TypeTestCoder{name: TestStringDatum, count: 13, data: []byte{0x68,0x65,0x6C,0x6C,0x6F,0x2C,0x20,0x77,0x6f,0x72,0x6C,0x64,0x2E}}
+	var text TypeTestCoder = TypeTestCoderObject
 
 	var code Object = text.Encode()
 
 	var check TypeTestCoder = text.Decode(code)
 	
-	if 0 == len(check.name) || 0 == check.count || 0 == len(check.data) {
+	if !TypeTestCoderObject.Equals(check) {
 
-		t.Error("Empty result of decoding.")
+		t.Error("Result of decoding.")
 	} else {
 		fmt.Println(json.Marshal(check))
 	}
