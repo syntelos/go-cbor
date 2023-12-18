@@ -1475,38 +1475,38 @@ func Encode(a any) (this Object) {
 
 		case uint8: // (eq byte)
 			this = Define(MajorUint).Refine(1)
-			var hbo []byte = []byte{a.(byte)}
+			var bbo []byte = []byte{a.(byte)}
 
-			this = this.Concatenate(hbo)
+			this = this.Concatenate(bbo)
 		case uint16:
 			this = Define(MajorUint).Refine(2)
-			var hbo []byte = endian.BigEndian.EncodeUint16(a.(uint16))
-			this = this.Concatenate(hbo)
+			var bbo []byte = endian.BigEndian.EncodeUint16(a.(uint16))
+			this = this.Concatenate(bbo)
 		case uint32:
 			this = Define(MajorUint).Refine(4)
-			var hbo []byte = endian.BigEndian.EncodeUint32(a.(uint32))
-			this = this.Concatenate(hbo)
+			var bbo []byte = endian.BigEndian.EncodeUint32(a.(uint32))
+			this = this.Concatenate(bbo)
 		case uint64:
 			this = Define(MajorUint).Refine(8)
-			var hbo []byte = endian.BigEndian.EncodeUint64(a.(uint64))
-			this = this.Concatenate(hbo)
+			var bbo []byte = endian.BigEndian.EncodeUint64(a.(uint64))
+			this = this.Concatenate(bbo)
 
 		case int8:
 			this = Define(MajorSint).Refine(1)
-			var hbo []byte = []byte{a.(byte)}
-			this = this.Concatenate(hbo)
+			var bbo []byte = []byte{a.(byte)}
+			this = this.Concatenate(bbo)
 		case int16:
 			this = Define(MajorSint).Refine(2)
-			var hbo []byte = endian.BigEndian.EncodeUint16(a.(uint16))
-			this = this.Concatenate(hbo)
+			var bbo []byte = endian.BigEndian.EncodeUint16(a.(uint16))
+			this = this.Concatenate(bbo)
 		case int32:
 			this = Define(MajorSint).Refine(4)
-			var hbo []byte = endian.BigEndian.EncodeUint32(a.(uint32))
-			this = this.Concatenate(hbo)
+			var bbo []byte = endian.BigEndian.EncodeUint32(a.(uint32))
+			this = this.Concatenate(bbo)
 		case int64:
 			this = Define(MajorSint).Refine(8)
-			var hbo []byte = endian.BigEndian.EncodeUint64(a.(uint64))
-			this = this.Concatenate(hbo)
+			var bbo []byte = endian.BigEndian.EncodeUint64(a.(uint64))
+			this = this.Concatenate(bbo)
 
 		case int:
 			var val int = a.(int)
@@ -1515,12 +1515,12 @@ func Encode(a any) (this Object) {
 			switch siz {
 			case 4:
 				this = Define(MajorSint).Refine(siz)
-				var hbo []byte = endian.BigEndian.EncodeUint32(uint32(val))
-				this = this.Concatenate(hbo)
+				var bbo []byte = endian.BigEndian.EncodeUint32(uint32(val))
+				this = this.Concatenate(bbo)
 			case 8:
 				this = Define(MajorSint).Refine(siz)
-				var hbo []byte = endian.BigEndian.EncodeUint64(uint64(val))
-				this = this.Concatenate(hbo)
+				var bbo []byte = endian.BigEndian.EncodeUint64(uint64(val))
+				this = this.Concatenate(bbo)
 			}
 
 		case uint:
@@ -1530,12 +1530,12 @@ func Encode(a any) (this Object) {
 			switch siz {
 			case 4:
 				this = Define(MajorUint).Refine(siz)
-				var hbo []byte = endian.BigEndian.EncodeUint32(uint32(val))
-				this = this.Concatenate(hbo)
+				var bbo []byte = endian.BigEndian.EncodeUint32(uint32(val))
+				this = this.Concatenate(bbo)
 			case 8:
 				this = Define(MajorUint).Refine(siz)
-				var hbo []byte = endian.BigEndian.EncodeUint64(uint64(val))
-				this = this.Concatenate(hbo)
+				var bbo []byte = endian.BigEndian.EncodeUint64(uint64(val))
+				this = this.Concatenate(bbo)
 			}
 
 		case uintptr:
@@ -1545,12 +1545,12 @@ func Encode(a any) (this Object) {
 			switch siz {
 			case 4:
 				this = Define(MajorUint).Refine(siz)
-				var hbo []byte = endian.BigEndian.EncodeUint32(uint32(val))
-				this = this.Concatenate(hbo)
+				var bbo []byte = endian.BigEndian.EncodeUint32(uint32(val))
+				this = this.Concatenate(bbo)
 			case 8:
 				this = Define(MajorUint).Refine(siz)
-				var hbo []byte = endian.BigEndian.EncodeUint64(uint64(val))
-				this = this.Concatenate(hbo)
+				var bbo []byte = endian.BigEndian.EncodeUint64(uint64(val))
+				this = this.Concatenate(bbo)
 			}
 
 
@@ -1714,21 +1714,21 @@ func (this Object) Decode() (a any) {
 				return value
 			}
 		case 0x19:
-			var cnt_ary []byte = this[1:2]
+			var cnt_ary []byte = this[1:3]
 			var cnt uint16 = endian.BigEndian.DecodeUint16(cnt_ary)
 			var text []byte = this[3:(3+cnt)]
 			var value big.Int
 			value.SetBytes(text)
 			return value
 		case 0x1A:
-			var cnt_ary []byte = this[1:4]
+			var cnt_ary []byte = this[1:5]
 			var cnt uint32 = endian.BigEndian.DecodeUint32(cnt_ary)
 			var text []byte = this[5:(5+cnt)]
 			var value big.Int
 			value.SetBytes(text)
 			return value
 		case 0x1B:
-			var cnt_ary []byte = this[1:8]
+			var cnt_ary []byte = this[1:9]
 			var cnt uint64 = endian.BigEndian.DecodeUint64(cnt_ary)
 			var text []byte = this[9:(9+cnt)]
 			var value big.Int
@@ -1756,21 +1756,21 @@ func (this Object) Decode() (a any) {
 				return value
 			}
 		case 0x39:
-			var cnt_ary []byte = this[1:2]
+			var cnt_ary []byte = this[1:3]
 			var cnt uint16 = endian.BigEndian.DecodeUint16(cnt_ary)
 			var text []byte = this[3:(3+cnt)]
 			var value big.Int
 			value.SetBytes(text)
 			return value
 		case 0x3A:
-			var cnt_ary []byte = this[1:4]
+			var cnt_ary []byte = this[1:5]
 			var cnt uint32 = endian.BigEndian.DecodeUint32(cnt_ary)
 			var text []byte = this[5:(5+cnt)]
 			var value big.Int
 			value.SetBytes(text)
 			return value
 		case 0x3B:
-			var cnt_ary []byte = this[1:8]
+			var cnt_ary []byte = this[1:9]
 			var cnt uint64 = endian.BigEndian.DecodeUint64(cnt_ary)
 			var text []byte = this[9:(9+cnt)]
 			var value big.Int
@@ -1782,20 +1782,20 @@ func (this Object) Decode() (a any) {
 			return text
 		case 0x58:
 			var cnt uint8 = this[1]
-			var text []byte = this[2:(3+cnt)]
+			var text []byte = this[2:(2+cnt)]
 			return text
 		case 0x59:
-			var cnt_ary []byte = this[1:2]
+			var cnt_ary []byte = this[1:3]
 			var cnt uint16 = endian.BigEndian.DecodeUint16(cnt_ary)
 			var text []byte = this[3:(3+cnt)]
 			return text
 		case 0x5A:
-			var cnt_ary []byte = this[1:4]
+			var cnt_ary []byte = this[1:5]
 			var cnt uint32 = endian.BigEndian.DecodeUint32(cnt_ary)
 			var text []byte = this[5:(5+cnt)]
 			return text
 		case 0x5B:
-			var cnt_ary []byte = this[1:8]
+			var cnt_ary []byte = this[1:9]
 			var cnt uint64 = endian.BigEndian.DecodeUint64(cnt_ary)
 			var text []byte = this[9:(9+cnt)]
 			return text
@@ -1826,17 +1826,17 @@ func (this Object) Decode() (a any) {
 			var text []byte = this[2:(2+cnt)]
 			return string(text)
 		case 0x79:
-			var cnt_ary []byte = this[1:2]
+			var cnt_ary []byte = this[1:3]
 			var cnt uint16 = endian.BigEndian.DecodeUint16(cnt_ary)
 			var text []byte = this[3:(3+cnt)]
 			return string(text)
 		case 0x7A:
-			var cnt_ary []byte = this[1:4]
+			var cnt_ary []byte = this[1:5]
 			var cnt uint32 = endian.BigEndian.DecodeUint32(cnt_ary)
 			var text []byte = this[5:(5+cnt)]
 			return string(text)
 		case 0x7B:
-			var cnt_ary []byte = this[1:8]
+			var cnt_ary []byte = this[1:9]
 			var cnt uint64 = endian.BigEndian.DecodeUint64(cnt_ary)
 			var text []byte = this[9:(9+cnt)]
 			return string(text)
@@ -1889,7 +1889,7 @@ func (this Object) Decode() (a any) {
 			}
 			return a
 		case 0x99:
-			var m, n uint16 = endian.BigEndian.DecodeUint16(this[1:2]), 0
+			var m, n uint16 = endian.BigEndian.DecodeUint16(this[1:3]), 0
 			var a []any = make([]any,m)
 			var b *bytes.Buffer = bytes.NewBuffer(this[3:])
 			var e error
@@ -1904,7 +1904,7 @@ func (this Object) Decode() (a any) {
 			}
 			return a
 		case 0x9A:
-			var m, n uint32 = endian.BigEndian.DecodeUint32(this[1:4]), 0
+			var m, n uint32 = endian.BigEndian.DecodeUint32(this[1:5]), 0
 			var a []any = make([]any,m)
 			var b *bytes.Buffer = bytes.NewBuffer(this[5:])
 			var e error
@@ -1919,7 +1919,7 @@ func (this Object) Decode() (a any) {
 			}
 			return a
 		case 0x9B:
-			var m, n uint64 = endian.BigEndian.DecodeUint64(this[1:8]), 0
+			var m, n uint64 = endian.BigEndian.DecodeUint64(this[1:9]), 0
 			var a []any = make([]any,m)
 			var b *bytes.Buffer = bytes.NewBuffer(this[9:])
 			var e error
@@ -1998,7 +1998,7 @@ func (this Object) Decode() (a any) {
 			}
 			return o
 		case 0xB9:
-			var m, n uint16 = endian.BigEndian.DecodeUint16(this[1:2]), 0
+			var m, n uint16 = endian.BigEndian.DecodeUint16(this[1:3]), 0
 			var o map[string]any = make(map[string]any,m)
 			var b *bytes.Buffer = bytes.NewBuffer(this[3:])
 			var e error
@@ -2023,7 +2023,7 @@ func (this Object) Decode() (a any) {
 			}
 			return o
 		case 0xBA:
-			var m, n uint32 = endian.BigEndian.DecodeUint32(this[1:4]), 0
+			var m, n uint32 = endian.BigEndian.DecodeUint32(this[1:5]), 0
 			var o map[string]any = make(map[string]any,m)
 			var b *bytes.Buffer = bytes.NewBuffer(this[5:])
 			var e error
@@ -2048,7 +2048,7 @@ func (this Object) Decode() (a any) {
 			}
 			return o
 		case 0xBB:
-			var m, n uint64 = endian.BigEndian.DecodeUint64(this[1:8]), 0
+			var m, n uint64 = endian.BigEndian.DecodeUint64(this[1:9]), 0
 			var o map[string]any = make(map[string]any,m)
 			var b *bytes.Buffer = bytes.NewBuffer(this[9:])
 			var e error
@@ -2170,15 +2170,15 @@ func (this Object) Describe() (string) {
 				desc = fmt.Sprintf("%s<int[%d]>",desc,cnt)
 			}
 		case 0x19:
-			var cnt_ary []byte = this[1:2]
+			var cnt_ary []byte = this[1:3]
 			var cnt uint16 = endian.BigEndian.DecodeUint16(cnt_ary)
 			desc = fmt.Sprintf("%s<uint16><int[%d]>",desc,cnt)
 		case 0x1A:
-			var cnt_ary []byte = this[1:4]
+			var cnt_ary []byte = this[1:5]
 			var cnt uint32 = endian.BigEndian.DecodeUint32(cnt_ary)
 			desc = fmt.Sprintf("%s<uint32><byte[%d]>",desc,cnt)
 		case 0x1B:
-			var cnt_ary []byte = this[1:8]
+			var cnt_ary []byte = this[1:9]
 			var cnt uint64 = endian.BigEndian.DecodeUint64(cnt_ary)
 			desc = fmt.Sprintf("%s<uint64><byte[%d]>",desc,cnt)
 		case 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37:
@@ -2195,15 +2195,15 @@ func (this Object) Describe() (string) {
 				desc = fmt.Sprintf("%s<uint8><byte[%d]>",desc,cnt)
 			}
 		case 0x39:
-			var cnt_ary []byte = this[1:2]
+			var cnt_ary []byte = this[1:3]
 			var cnt uint16 = endian.BigEndian.DecodeUint16(cnt_ary)
 			desc = fmt.Sprintf("%s<uint16><byte[%d]>",desc,cnt)
 		case 0x3A:
-			var cnt_ary []byte = this[1:4]
+			var cnt_ary []byte = this[1:5]
 			var cnt uint32 = endian.BigEndian.DecodeUint32(cnt_ary)
 			desc = fmt.Sprintf("%s<uint32><byte[%d]>",desc,cnt)
 		case 0x3B:
-			var cnt_ary []byte = this[1:8]
+			var cnt_ary []byte = this[1:9]
 			var cnt uint64 = endian.BigEndian.DecodeUint64(cnt_ary)
 			desc = fmt.Sprintf("%s<uint64><byte[%d]>",desc,cnt)
 		case 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47, 0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F, 0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57:
@@ -2213,15 +2213,15 @@ func (this Object) Describe() (string) {
 			var cnt uint8 = this[1]
 			desc = fmt.Sprintf("%s<uint8><byte[%d]>",desc,cnt)
 		case 0x59:
-			var cnt_ary []byte = this[1:2]
+			var cnt_ary []byte = this[1:3]
 			var cnt uint16 = endian.BigEndian.DecodeUint16(cnt_ary)
 			desc = fmt.Sprintf("%s<uint16><byte[%d]>",desc,cnt)
 		case 0x5A:
-			var cnt_ary []byte = this[1:4]
+			var cnt_ary []byte = this[1:5]
 			var cnt uint32 = endian.BigEndian.DecodeUint32(cnt_ary)
 			desc = fmt.Sprintf("%s<uint32><byte[%d]>",desc,cnt)
 		case 0x5B:
-			var cnt_ary []byte = this[1:8]
+			var cnt_ary []byte = this[1:9]
 			var cnt uint64 = endian.BigEndian.DecodeUint64(cnt_ary)
 			desc = fmt.Sprintf("%s<uint64><byte[%d]>",desc,cnt)
 		case 0x5F:
@@ -2248,15 +2248,15 @@ func (this Object) Describe() (string) {
 			var cnt uint8 = this[1]
 			desc = fmt.Sprintf("%s<uint8><byte[%d]>",desc,cnt)
 		case 0x79:
-			var cnt_ary []byte = this[1:2]
+			var cnt_ary []byte = this[1:3]
 			var cnt uint16 = endian.BigEndian.DecodeUint16(cnt_ary)
 			desc = fmt.Sprintf("%s<uint16><byte[%d]>",desc,cnt)
 		case 0x7A:
-			var cnt_ary []byte = this[1:4]
+			var cnt_ary []byte = this[1:5]
 			var cnt uint32 = endian.BigEndian.DecodeUint32(cnt_ary)
 			desc = fmt.Sprintf("%s<uint32><byte[%d]>",desc,cnt)
 		case 0x7B:
-			var cnt_ary []byte = this[1:8]
+			var cnt_ary []byte = this[1:9]
 			var cnt uint64 = endian.BigEndian.DecodeUint64(cnt_ary)
 			desc = fmt.Sprintf("%s<uint64><byte[%d]>",desc,cnt)
 		case 0x7F:
@@ -2303,7 +2303,7 @@ func (this Object) Describe() (string) {
 			}
 			return desc
 		case 0x99:
-			var m, n uint16 = endian.BigEndian.DecodeUint16(this[1:2]), 0
+			var m, n uint16 = endian.BigEndian.DecodeUint16(this[1:3]), 0
 			desc = fmt.Sprintf("%s<uint16[%d]>",desc,m)
 			var b *bytes.Buffer = bytes.NewBuffer(this[3:])
 			var e error
@@ -2318,7 +2318,7 @@ func (this Object) Describe() (string) {
 			}
 			return desc
 		case 0x9A:
-			var m, n uint32 = endian.BigEndian.DecodeUint32(this[1:4]), 0
+			var m, n uint32 = endian.BigEndian.DecodeUint32(this[1:5]), 0
 			desc = fmt.Sprintf("%s<uint32[%d]>",desc,m)
 			var b *bytes.Buffer = bytes.NewBuffer(this[5:])
 			var e error
@@ -2333,7 +2333,7 @@ func (this Object) Describe() (string) {
 			}
 			return desc
 		case 0x9B:
-			var m, n uint64 = endian.BigEndian.DecodeUint64(this[1:8]), 0
+			var m, n uint64 = endian.BigEndian.DecodeUint64(this[1:9]), 0
 			desc = fmt.Sprintf("%s<uint64[%d]>",desc,m)
 			var b *bytes.Buffer = bytes.NewBuffer(this[9:])
 			var e error
@@ -2407,7 +2407,7 @@ func (this Object) Describe() (string) {
 			}
 			return desc
 		case 0xB9:
-			var m, n uint16 = endian.BigEndian.DecodeUint16(this[1:2]), 0
+			var m, n uint16 = endian.BigEndian.DecodeUint16(this[1:3]), 0
 			desc = fmt.Sprintf("%s<uint16[%d]>",desc,m)
 			var b *bytes.Buffer = bytes.NewBuffer(this[3:])
 			var e error
@@ -2430,7 +2430,7 @@ func (this Object) Describe() (string) {
 			}
 			return desc
 		case 0xBA:
-			var m, n uint32 = endian.BigEndian.DecodeUint32(this[1:4]), 0
+			var m, n uint32 = endian.BigEndian.DecodeUint32(this[1:5]), 0
 			desc = fmt.Sprintf("%s<uint32[%d]>",desc,m)
 			var b *bytes.Buffer = bytes.NewBuffer(this[5:])
 			var e error
@@ -2453,7 +2453,7 @@ func (this Object) Describe() (string) {
 			}
 			return desc
 		case 0xBB:
-			var m, n uint64 = endian.BigEndian.DecodeUint64(this[1:8]), 0
+			var m, n uint64 = endian.BigEndian.DecodeUint64(this[1:9]), 0
 			desc = fmt.Sprintf("%s<uint64[%d]>",desc,m)
 			var b *bytes.Buffer = bytes.NewBuffer(this[9:])
 			var e error
