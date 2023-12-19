@@ -1,7 +1,5 @@
                         -*-outline-*-
 
-* encoding lengths
-
 * object coding
 ** map binding by reflection
 *** eliminate "type Coder interface" from package
