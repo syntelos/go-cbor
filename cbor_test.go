@@ -39,14 +39,14 @@ func TestString(t *testing.T){
 type TypeTestCoder struct {
 
 	name string
-	count int
+
 	data []byte
 }
 
-var TypeTestCoderObject TypeTestCoder = TypeTestCoder{name: TestStringDatum, count: len(TestStringDatum), data: TestStringCode}
+var TypeTestCoderObject TypeTestCoder = TypeTestCoder{name: TestStringDatum, data: TestStringCode}
 
 func (this TypeTestCoder) Equals(that TypeTestCoder) (bool) {
-	if this.name == that.name && this.count == that.count {
+	if this.name == that.name {
 		var m, n, o int = 0, len(this.data), len(that.data)
 		if n == o {
 			for ; n < m; n++ {
@@ -70,20 +70,18 @@ func (this TypeTestCoder) String() (string) {
 	}
 }
 func (this TypeTestCoder) Encode() (code Object) {
-	var text map[string]any = map[string]any{ "name": this.name, "count": this.count, "data": this.data}
+	var text map[string]any = map[string]any{ "name": this.name, "data": this.data}
 
 	code = Encode(text) // [TODO] [BREAKPOINT]
 	return code
 }
 func (this TypeTestCoder) Decode(cbor Object) (TypeTestCoder) {
 	this.name = ""
-	this.count = 0
 	this.data = nil
 
 	var text map[string]any = cbor.Decode().(map[string]any) // [TODO] [BUG]
 
 	this.name = text["name"].(string)
-	this.count = text["count"].(int)
 	this.data = text["data"].([]byte)
 
 	return this
