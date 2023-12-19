@@ -10,7 +10,6 @@
 package cbor
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
 )
@@ -38,19 +37,19 @@ func TestString(t *testing.T){
 
 type TypeTestCoder struct {
 
-	name string
+	source string
 
-	data []byte
+	target []byte
 }
 
-var TypeTestCoderObject TypeTestCoder = TypeTestCoder{name: TestStringDatum, data: TestStringCode}
+var TypeTestCoderObject TypeTestCoder = TypeTestCoder{source: TestStringDatum, target: TestStringCode}
 
 func (this TypeTestCoder) Equals(that TypeTestCoder) (bool) {
-	if this.name == that.name {
-		var m, n, o int = 0, len(this.data), len(that.data)
+	if this.source == that.source {
+		var m, n, o int = 0, len(this.target), len(that.target)
 		if n == o {
 			for ; n < m; n++ {
-				if this.data[n] != that.data[n] {
+				if this.target[n] != that.target[n] {
 					return false
 				}
 			}
@@ -59,45 +58,25 @@ func (this TypeTestCoder) Equals(that TypeTestCoder) (bool) {
 	}
 	return false
 }
-func (this TypeTestCoder) String() (string) {
-	var by []byte
-	var er error
-	by, er = json.Marshal(this)
-	if nil == er {
-		return string(by)
-	} else {
-		return ""
-	}
-}
 func (this TypeTestCoder) Encode() (code Object) {
-	var text map[string]any = map[string]any{ "name": this.name, "data": this.data}
+	var text map[string]any = map[string]any{ "source": this.source, "target": this.target}
 
-	code = Encode(text) // [TODO] [BREAKPOINT]
+	code = Encode(text)
 	return code
 }
 func (this TypeTestCoder) Decode(cbor Object) (TypeTestCoder) {
-	this.name = ""
-	this.data = nil
+	this.source = ""
+	this.target = nil
 
-	var text map[string]any = cbor.Decode().(map[string]any) // [TODO] [BUG]
+	var text map[string]any = cbor.Decode().(map[string]any)
 
-	this.name = text["name"].(string)
-	this.data = text["data"].([]byte)
+	this.source = text["source"].(string)
+	this.target = text["target"].([]byte)
 
 	return this
 }
 
-func TestDescribe(t *testing.T){
-	var text TypeTestCoder = TypeTestCoderObject
-
-	var code Object = text.Encode()
-
-	var structure string = code.Describe()
-
-	fmt.Println(structure)
-}
-
-func TestObject(t *testing.T){
+func TestCoder(t *testing.T){
 	var text TypeTestCoder = TypeTestCoderObject
 
 	var code Object = text.Encode()
@@ -106,8 +85,6 @@ func TestObject(t *testing.T){
 	
 	if !TypeTestCoderObject.Equals(check) {
 
-		t.Error("Result of decoding.")
-	} else {
-		fmt.Println(json.Marshal(check))
+		t.Error("Decoding")
 	}
 }

@@ -1,35 +1,75 @@
 /*
- * CBOR Examples
- * Copyright 2023 John Douglas Pritchard, Syntelos
- *
- *
- * References
- *
- * https://datatracker.ietf.org/doc/html/rfc8949
+ * GOPL type struct object coding requires type binding.
  */
 package cbor
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
-func ExampleTags(){
-	var list []Object = []Object{
-		Object{0x00}, Object{0x18}, Object{0x20},
-		Object{0x38}, Object{0x40}, Object{0x58},
-		Object{0x60}, Object{0x78}, Object{0x80},
-		Object{0x98}, Object{0xA0}, Object{0xB8},
-		Object{0xC0}, Object{0xC1}, Object{0xC2},
-		Object{0xC3}, Object{0xC4}, Object{0xC5},
-		Object{0xC6}, Object{0xD5}, Object{0xDB},
-		Object{0xE0}, Object{0xF4}, Object{0xF5},
-		Object{0xF6}, Object{0xF7}, Object{0xF8},
-		Object{0xF9}, Object{0xFA}, Object{0xFB},
-		Object{0xFF},
-	}
+type TypeExampleCoder struct {
 
-	for _, o := range list {
+	source string
 
-		fmt.Printf("0x%02X 0b%08b [%s] \"%s\"\n", o.Tag(), o.Tag(), o.MajorString(), o.String())
+	target []byte
+}
+
+const ExampleStringDatum string = "hello, world."
+
+var ExampleStringCode []byte = []byte{0x68,0x65,0x6C,0x6C,0x6F,0x2C,0x20,0x77,0x6f,0x72,0x6C,0x64,0x2E}
+
+var TypeExampleCoderObject TypeExampleCoder = TypeExampleCoder{source: ExampleStringDatum, target: ExampleStringCode}
+
+func (this TypeExampleCoder) Equals(that TypeExampleCoder) (bool) {
+	if this.source == that.source {
+		var m, n, o int = 0, len(this.target), len(that.target)
+		if n == o {
+			for ; n < m; n++ {
+				if this.target[n] != that.target[n] {
+					return false
+				}
+			}
+			return true
+		}
 	}
+	return false
+}
+func (this TypeExampleCoder) String() (string) {
+	var by []byte
+	var er error
+	by, er = json.Marshal(this)
+	if nil == er {
+		return string(by)
+	} else {
+		return ""
+	}
+}
+func (this TypeExampleCoder) Encode() (code Object) {
+	var text map[string]any = map[string]any{ "source": this.source, "target": this.target}
+
+	code = Encode(text)
+	return code
+}
+func (this TypeExampleCoder) Decode(cbor Object) (TypeExampleCoder) {
+	this.source = ""
+	this.target = nil
+
+	var text map[string]any = cbor.Decode().(map[string]any)
+
+	this.source = text["source"].(string)
+	this.target = text["target"].([]byte)
+
+	return this
+}
+func ExampleDescribe(){
+	var text TypeExampleCoder = TypeExampleCoderObject
+
+	var code Object = text.Encode()
+
+	var content string = code.String()
+
+	var encoding string = code.Describe()
+
+	fmt.Printf("%s\t%s\n",content,encoding)
 }
