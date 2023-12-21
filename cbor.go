@@ -24,8 +24,7 @@ import (
  */
 type Object []byte
 /*
- * Content object user interface.  CBOR binary code is
- * consumed and produced in these interfaces.
+ * Binary code user interface.
  */
 type IO interface {
 	/*

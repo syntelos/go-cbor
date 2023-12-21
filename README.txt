@@ -1,7 +1,12 @@
 CBOR I/O for GOPL
 
+  /*
+   * Encoded data set content object.
+   */
   type Object []byte
-
+  /*
+   * Binary code user interface.
+   */
   type IO interface {
 
 	  Write(io.Writer) (error)
